@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">The Great Library of Arts</string>
+    <string name="qs_tile_label">Library of Arts</string>
+    <string name="wallpaper_description">A slowly drifting public-domain artwork with parallax.</string>
+    <string name="widget_description">A daily artwork from The Great Library of Arts.</string>
+    <string name="shortcut_explore_short">Explore</string>
+    <string name="shortcut_explore_long">Explore the collection</string>
+    <string name="shortcut_journal_short">Journal</string>
+    <string name="shortcut_journal_long">Open your private journal</string>
+    <string name="shortcut_scan_short">Scan a painting</string>
+    <string name="shortcut_scan_long">Identify a painting offline</string>
+    <string name="notification_channel_daily">Daily artwork</string>
+    <string name="notification_channel_daily_description">One quiet artwork notification each day.</string>
+    <string name="notification_title">A work for today</string>
+    <string name="notification_action">Look closely</string>
+    <string name="cast_app_id">CC1AD845</string>
+</resources>

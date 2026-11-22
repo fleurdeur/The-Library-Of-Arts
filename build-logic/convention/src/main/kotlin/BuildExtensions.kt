@@ -1,0 +1,16 @@
+package org.libraryofarts.buildlogic
+
+import org.gradle.api.Project
+import org.gradle.api.artifacts.MinimalExternalModuleDependency
+import org.gradle.api.artifacts.VersionCatalog
+import org.gradle.api.artifacts.VersionCatalogsExtension
+import org.gradle.api.provider.Provider
+import org.gradle.kotlin.dsl.getByType
+
+internal fun Project.catalog(): VersionCatalog =
+    extensions.getByType<VersionCatalogsExtension>().named("libs")
+
+internal fun Project.lib(alias: String): Provider<MinimalExternalModuleDependency> =
+    catalog().findLibrary(alias).orElseThrow {
+        IllegalArgumentException("Unknown library alias '$alias'")
+    }

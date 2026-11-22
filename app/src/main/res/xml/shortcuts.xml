@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="explore"
+        android:enabled="true"
+        android:icon="@drawable/ic_tile"
+        android:shortcutShortLabel="@string/shortcut_explore_short"
+        android:shortcutLongLabel="@string/shortcut_explore_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="libraryofarts://explore"
+            android:targetClass="org.libraryofarts.app.MainActivity"
+            android:targetPackage="org.libraryofarts.app" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="journal"
+        android:enabled="true"
+        android:icon="@drawable/ic_tile"
+        android:shortcutShortLabel="@string/shortcut_journal_short"
+        android:shortcutLongLabel="@string/shortcut_journal_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="libraryofarts://journal"
+            android:targetClass="org.libraryofarts.app.MainActivity"
+            android:targetPackage="org.libraryofarts.app" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="scan"
+        android:enabled="true"
+        android:icon="@drawable/ic_tile"
+        android:shortcutShortLabel="@string/shortcut_scan_short"
+        android:shortcutLongLabel="@string/shortcut_scan_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="libraryofarts://scan"
+            android:targetClass="org.libraryofarts.app.MainActivity"
+            android:targetPackage="org.libraryofarts.app" />
+    </shortcut>
+</shortcuts>
