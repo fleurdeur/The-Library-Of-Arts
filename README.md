@@ -241,7 +241,7 @@ The in-app privacy dashboard lists these controls.
 - JVM unit tests cover the recommendation engine, seed integrity and encryption round-trips.
 - `lintDebug` runs as part of CI.
 - `baselineprofile/` contains a Macrobenchmark startup-profile generator; run it on a physical device and copy the generated profile into `app/src/main/`.
-- ktlint and detekt configurations are included and run in a non-blocking CI job while existing style is normalized.
+- ktlint and detekt configurations are included for local/CI use; wire them into a style job when the codebase has been formatted to the chosen ruleset.
 - GitHub Actions builds, tests, lints and uploads reports on every push and pull request.
 
 ```bash
