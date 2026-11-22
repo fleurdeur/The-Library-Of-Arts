@@ -55,9 +55,11 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import android.content.pm.PackageManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -406,6 +408,12 @@ private fun locate(
     onLocation: (Double, Double) -> Unit,
     onFailure: (String) -> Unit,
 ) {
+    val fine = ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION)
+    val coarse = ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION)
+    if (fine != PackageManager.PERMISSION_GRANTED && coarse != PackageManager.PERMISSION_GRANTED) {
+        onFailure("Location permission is not available. The map and floor guides still work.")
+        return
+    }
     runCatching {
         val client = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(context)
         client.lastLocation

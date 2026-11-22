@@ -62,12 +62,6 @@
                 android:resource="@xml/shortcuts" />
         </activity>
 
-        <activity
-            android:name=".ui.ArWallActivity"
-            android:exported="false"
-            android:screenOrientation="portrait"
-            android:theme="@style/Theme.LibraryOfArts" />
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

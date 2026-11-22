@@ -8,3 +8,11 @@ plugins {
     alias(libs.plugins.ktlint) apply false
     alias(libs.plugins.detekt) apply false
 }
+
+// Modules without JVM tests are normal in a Compose-heavy project; only fail
+// when a test source set exists and discovery silently finds nothing.
+allprojects {
+    tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+        failOnNoDiscoveredTests = false
+    }
+}
