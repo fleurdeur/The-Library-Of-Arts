@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="620" viewBox="0 0 1600 620" role="img" aria-labelledby="title desc">
+  <title id="title">The Great Library of Arts banner</title>
+  <desc id="desc">A dark gallery wall with a warm arched window, an artwork frame and the library title.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#100D0B"/>
+      <stop offset="55%" stop-color="#1B1613"/>
+      <stop offset="100%" stop-color="#241C16"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="78%" cy="28%" r="62%">
+      <stop offset="0%" stop-color="#D99A4E" stop-opacity=".55"/>
+      <stop offset="45%" stop-color="#A84B32" stop-opacity=".18"/>
+      <stop offset="100%" stop-color="#100D0B" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="arch" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F0C77D"/>
+      <stop offset="40%" stop-color="#B65B3B"/>
+      <stop offset="75%" stop-color="#5A3A32"/>
+      <stop offset="100%" stop-color="#211A16"/>
+    </linearGradient>
+    <linearGradient id="frame" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E4B86A"/>
+      <stop offset="100%" stop-color="#744B22"/>
+    </linearGradient>
+    <linearGradient id="canvas" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#36506B"/>
+      <stop offset="45%" stop-color="#8A5A45"/>
+      <stop offset="100%" stop-color="#D2A35F"/>
+    </linearGradient>
+    <filter id="blur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="42"/>
+    </filter>
+  </defs>
+  <rect width="1600" height="620" fill="url(#bg)"/>
+  <rect width="1600" height="620" fill="url(#glow)"/>
+  <g opacity=".2" stroke="#E8D9C3" stroke-width="1">
+    <path d="M0 512h1600M0 540h1600M0 568h1600"/>
+    <path d="M80 0v620M120 0v620"/>
+  </g>
+  <g transform="translate(1120 0)">
+    <path d="M-180 620V300C-180 155 -72 48 80 48s260 107 260 252v320z" fill="url(#arch)" opacity=".85"/>
+    <path d="M-120 620V306C-120 190 -30 100 80 100s200 90 200 206v314z" fill="#100D0B" opacity=".28"/>
+    <path d="M-120 620V306C-120 190 -30 100 80 100s200 90 200 206v314" fill="none" stroke="#F5DFB3" stroke-opacity=".35" stroke-width="4"/>
+    <g transform="translate(-8 218)">
+      <rect x="0" y="0" width="250" height="290" fill="#2A211A" stroke="url(#frame)" stroke-width="16"/>
+      <rect x="24" y="24" width="202" height="242" fill="url(#canvas)"/>
+      <circle cx="165" cy="91" r="36" fill="#F3D6A1" opacity=".9"/>
+      <path d="M24 210c47-62 85-76 125-38 27-35 55-42 77-20v114H24z" fill="#223142" opacity=".85"/>
+      <path d="M24 238c36-25 68-24 95 2 29-34 71-34 107-3v29H24z" fill="#C89454" opacity=".55"/>
+    </g>
+    <path d="M-210 596h580" stroke="#E2B368" stroke-opacity=".55" stroke-width="3"/>
+  </g>
+  <g fill="#F4EFE6">
+    <text x="100" y="164" font-family="Georgia, 'Times New Roman', serif" font-size="27" letter-spacing="8" fill="#D5A65C">THE GREAT LIBRARY</text>
+    <text x="94" y="270" font-family="Georgia, 'Times New Roman', serif" font-size="92" letter-spacing="1">of Arts</text>
+  </g>
+  <text x="100" y="330" font-family="Helvetica, Arial, sans-serif" font-size="24" fill="#C9BCAA">Eleven museums. One quiet, offline library.</text>
+  <text x="100" y="368" font-family="Helvetica, Arial, sans-serif" font-size="20" fill="#8F8071">Public-domain art · deep looking · private by design</text>
+  <g transform="translate(100 438)">
+    <rect width="182" height="48" rx="24" fill="#B5452B"/>
+    <text x="91" y="31" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="18" font-weight="bold" fill="#FFF8EE">OPEN THE LIBRARY</text>
+  </g>
+  <g stroke="#E2B368" stroke-opacity=".55" fill="none">
+    <path d="M100 410h500"/>
+    <circle cx="620" cy="410" r="5" fill="#E2B368" stroke="none"/>
+  </g>
+</svg>
