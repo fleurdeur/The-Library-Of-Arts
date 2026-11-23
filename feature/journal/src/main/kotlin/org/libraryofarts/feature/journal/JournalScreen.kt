@@ -127,7 +127,7 @@ fun JournalScreen(
                             }
                         }
                     },
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(1.dp),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 )
@@ -161,7 +161,7 @@ fun JournalScreen(
                     ) {
                         items(state.timeline, key = { it.monthKey }) { point ->
                             GlassCard(
-                                shape = RoundedCornerShape(20.dp),
+                                shape = RoundedCornerShape(1.dp),
                                 modifier = Modifier.width(132.dp),
                             ) {
                                 Column(modifier = Modifier.padding(14.dp)) {
@@ -238,7 +238,7 @@ fun JournalScreen(
 private fun Stat(value: String, label: String) {
     Column(
         modifier = Modifier
-            .clip(RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(1.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
@@ -259,7 +259,7 @@ private fun JournalEntryCard(entry: JournalEntry, onClick: () -> Unit, onDelete:
             Box(
                 modifier = Modifier
                     .size(width = 92.dp, height = 112.dp)
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(1.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center,
             ) {

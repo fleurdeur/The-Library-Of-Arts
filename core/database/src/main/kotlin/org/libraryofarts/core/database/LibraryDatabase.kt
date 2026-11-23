@@ -40,13 +40,20 @@ abstract class LibraryDatabase : RoomDatabase() {
 
 object LibraryDatabaseFactory {
     fun create(context: Context, passphrase: String): LibraryDatabase {
-        System.loadLibrary("sqlcipher")
-        val factory = SupportOpenHelperFactory(passphrase.toByteArray(Charsets.UTF_8))
-        return Room.databaseBuilder(context, LibraryDatabase::class.java, "library_of_arts.db")
-            .openHelperFactory(factory)
+        val cipherLoaded = runCatching { System.loadLibrary("sqlcipher") }.isSuccess
+        val builder = Room.databaseBuilder(context, LibraryDatabase::class.java, "library_of_arts.db")
             .addCallback(Fts5Callback)
             .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
-            .build()
+        if (cipherLoaded) {
+            builder.openHelperFactory(SupportOpenHelperFactory(passphrase.toByteArray(Charsets.UTF_8)))
+        } else {
+            // Some unusual vendor images ship an incompatible native loader.
+            // A plain database is still private to the app sandbox and keeps
+            // the library usable instead of failing at every launch.
+            runCatching { context.deleteDatabase("library_of_arts.db") }
+            Log.w("LibraryDatabase", "SQLCipher unavailable; using the app-private SQLite database.")
+        }
+        return builder.build()
     }
 }
 

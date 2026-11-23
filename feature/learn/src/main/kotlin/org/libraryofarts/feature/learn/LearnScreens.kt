@@ -148,7 +148,7 @@ fun LearnRoute(
                                 }
                             },
                             singleLine = true,
-                            shape = RoundedCornerShape(20.dp),
+                            shape = RoundedCornerShape(1.dp),
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         )
                     }
@@ -547,7 +547,7 @@ fun FlashcardsRoute(
                                             Modifier
                                                 .fillMaxWidth()
                                                 .height(240.dp)
-                                                .clip(RoundedCornerShape(20.dp)),
+                                                .clip(RoundedCornerShape(1.dp)),
                                         )
                                     }
                                 }

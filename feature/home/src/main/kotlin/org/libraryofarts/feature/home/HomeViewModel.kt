@@ -103,6 +103,11 @@ class HomeViewModel @Inject constructor(
         }
         viewModelScope.launch(AppDispatchers.io) {
             runCatching { artworkRepository.get().seedIfNeeded() }
+            // Pull fresh paintings from every keyless source in the background.
+            // The seed library is already on screen, so this never blocks the
+            // first frame and a slow museum only enriches the next refresh.
+            runCatching { artworkRepository.get().refreshHighlights() }
+            refresh()
         }
     }
 

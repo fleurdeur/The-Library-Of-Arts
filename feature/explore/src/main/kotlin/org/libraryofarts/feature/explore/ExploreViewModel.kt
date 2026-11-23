@@ -3,15 +3,20 @@ package org.libraryofarts.feature.explore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
+import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -59,9 +64,9 @@ data class ExploreUiState(
 
 @HiltViewModel
 class ExploreViewModel @Inject constructor(
-    private val artworks: ArtworkRepository,
-    private val collections: CollectionRepository,
-    private val visits: MuseumVisitRepository,
+    private val artworks: Lazy<ArtworkRepository>,
+    private val collections: Lazy<CollectionRepository>,
+    private val visits: Lazy<MuseumVisitRepository>,
 ) : ViewModel() {
     private val filter = MutableStateFlow(ArtworkFilter())
     private val mode = MutableStateFlow(ExploreMode.BROWSE)
@@ -70,18 +75,35 @@ class ExploreViewModel @Inject constructor(
 
     val results: Flow<PagingData<Artwork>> = filter
         .debounce(250)
-        .flatMapLatest { artworks.search(it) }
+        .flatMapLatest { artworks.get().search(it) }
+        .flowOn(AppDispatchers.io)
 
     init {
         viewModelScope.launch(AppDispatchers.io) {
-            runCatching { artworks.seedIfNeeded() }
-            runCatching { collections.ensureFavorites() }
+            runCatching { artworks.get().seedIfNeeded() }
+            runCatching { collections.get().ensureFavorites() }
             runCatching {
-                _ui.value = _ui.value.copy(hiddenGems = artworks.hiddenGems(10))
+                _ui.value = _ui.value.copy(hiddenGems = artworks.get().hiddenGems(10))
             }
-            collections.observeArtworkIds(CollectionRepository.FAVORITES_ID).collect { ids ->
-                _ui.value = _ui.value.copy(savedIds = ids.toSet())
-            }
+            // A closed or damaged database must never crash Explore. The
+            // earlier version collected this flow unguarded, which took the
+            // whole process down when the library could not be opened.
+            collections.get().observeArtworkIds(CollectionRepository.FAVORITES_ID)
+                .catch { /* Favorites simply stay empty until the library reopens. */ }
+                .collect { ids ->
+                    _ui.value = _ui.value.copy(savedIds = ids.toSet())
+                }
+        }
+        viewModelScope.launch(AppDispatchers.io) {
+            filter.map { it.query }
+                .distinctUntilChanged()
+                .debounce(550)
+                .collectLatest { query ->
+                    runCatching { artworks.get().refreshFromNetwork(query) }
+                    runCatching {
+                        _ui.value = _ui.value.copy(hiddenGems = artworks.get().hiddenGems(10))
+                    }
+                }
         }
         viewModelScope.launch {
             combine(filter, mode) { f, m -> f to m }.collect { (f, m) ->
@@ -126,7 +148,7 @@ class ExploreViewModel @Inject constructor(
         _ui.value = _ui.value.copy(selectedCentury = century)
         if (century != null) {
             viewModelScope.launch(AppDispatchers.io) {
-                val list = artworks.searchOnce(
+                val list = artworks.get().searchOnce(
                     ArtworkFilter(
                         centuryFrom = century,
                         centuryTo = century,
@@ -151,17 +173,25 @@ class ExploreViewModel @Inject constructor(
 
     fun loadColorResults() {
         viewModelScope.launch(AppDispatchers.io) {
-            val list = artworks.searchOnce(filter.value.copy(sort = SortOrder.MOST_VIEWED), 30)
+            val list = artworks.get().searchOnce(filter.value.copy(sort = SortOrder.MOST_VIEWED), 30)
             _ui.value = _ui.value.copy(colorResults = list)
         }
     }
 
     fun onLocation(latitude: Double, longitude: Double) {
-        val nearby = visits.nearby(latitude, longitude)
-        _ui.value = _ui.value.copy(
-            nearby = nearby,
-            locationState = if (nearby.isEmpty()) "No partner museums within 1,500 km — browse the map instead." else null,
-        )
+        viewModelScope.launch(AppDispatchers.io) {
+            runCatching { visits.get().nearby(latitude, longitude) }.fold(
+                onSuccess = { nearby ->
+                    _ui.value = _ui.value.copy(
+                        nearby = nearby,
+                        locationState = if (nearby.isEmpty()) "No partner museums within 1,500 km — browse the map instead." else null,
+                    )
+                },
+                onFailure = {
+                    _ui.value = _ui.value.copy(locationState = "Location could not be read. The map and floor guides still work.")
+                },
+            )
+        }
     }
 
     fun locationUnavailable(message: String) {
@@ -169,9 +199,12 @@ class ExploreViewModel @Inject constructor(
     }
 
     fun openMuseum(museum: Museum) {
-        val guide = visits.floorGuide(museum)
-        val tour = visits.audioTour(museum)
-        _ui.value = _ui.value.copy(selectedMuseum = museum, floorGuide = guide, tourStops = tour)
+        _ui.value = _ui.value.copy(selectedMuseum = museum)
+        viewModelScope.launch(AppDispatchers.io) {
+            val guide = runCatching { visits.get().floorGuide(museum) }.getOrNull()
+            val tour = runCatching { visits.get().audioTour(museum) }.getOrNull().orEmpty()
+            _ui.value = _ui.value.copy(selectedMuseum = museum, floorGuide = guide, tourStops = tour)
+        }
     }
 
     fun closeMuseum() {
@@ -179,12 +212,14 @@ class ExploreViewModel @Inject constructor(
     }
 
     fun toggleSave(artwork: Artwork) {
-        viewModelScope.launch {
-            runCatching { collections.ensureFavorites() }
-            if (artwork.id in _ui.value.savedIds) {
-                collections.remove(CollectionRepository.FAVORITES_ID, artwork.id)
-            } else {
-                collections.add(CollectionRepository.FAVORITES_ID, artwork.id)
+        viewModelScope.launch(AppDispatchers.io) {
+            runCatching {
+                collections.get().ensureFavorites()
+                if (artwork.id in _ui.value.savedIds) {
+                    collections.get().remove(CollectionRepository.FAVORITES_ID, artwork.id)
+                } else {
+                    collections.get().add(CollectionRepository.FAVORITES_ID, artwork.id)
+                }
             }
         }
     }

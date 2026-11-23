@@ -6,6 +6,7 @@ import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -291,7 +292,7 @@ private fun ArtworkScreen(
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .padding(horizontal = 20.dp, vertical = 8.dp)
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(1.dp))
                         .clickable { onOpenArtist(artist.name) },
                 )
             }
@@ -379,7 +380,7 @@ private fun ArtworkScreen(
                     modifier = Modifier
                         .padding(horizontal = 20.dp, vertical = 8.dp)
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(22.dp))
+                        .clip(RoundedCornerShape(1.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f))
                         .clickable { showDescription = true }
                         .padding(18.dp),
@@ -530,7 +531,7 @@ private fun CircleAction(
     Box(
         modifier = Modifier
             .size(44.dp)
-            .clip(CircleShape)
+            .clip(RoundedCornerShape(1.dp))
             .background(Color.Black.copy(alpha = 0.42f))
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -547,8 +548,8 @@ private fun ActionChip(
 ) {
     Row(
         modifier = Modifier
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
+            .clip(RoundedCornerShape(1.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(1.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 9.dp),
         verticalAlignment = Alignment.CenterVertically,

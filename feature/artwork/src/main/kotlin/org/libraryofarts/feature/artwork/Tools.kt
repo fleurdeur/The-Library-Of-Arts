@@ -85,7 +85,7 @@ fun SlowLookingDialog(artwork: Artwork, onDismiss: () -> Unit) {
 
     Dialog(onDismissRequest = onDismiss) {
         Surface(
-            shape = RoundedCornerShape(32.dp),
+            shape = RoundedCornerShape(1.dp),
             color = MaterialTheme.colorScheme.surface,
             tonalElevation = 6.dp,
         ) {
@@ -101,7 +101,7 @@ fun SlowLookingDialog(artwork: Artwork, onDismiss: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(220.dp)
-                        .clip(RoundedCornerShape(22.dp)),
+                        .clip(RoundedCornerShape(1.dp)),
                 ) {
                     ArtworkImage(artwork, Modifier.fillMaxWidth().height(220.dp))
                 }
@@ -152,7 +152,7 @@ fun FramePreviewDialog(artwork: Artwork, onDismiss: () -> Unit) {
     var mat by remember { mutableStateOf(true) }
     val frameNames = listOf("Gilded wood", "Black lacquer", "Natural oak")
     Dialog(onDismissRequest = onDismiss) {
-        Surface(shape = RoundedCornerShape(32.dp), color = MaterialTheme.colorScheme.surface) {
+        Surface(shape = RoundedCornerShape(1.dp), color = MaterialTheme.colorScheme.surface) {
             Column(
                 modifier = Modifier
                     .padding(24.dp)
@@ -216,7 +216,7 @@ fun ScaleCheckDialog(artwork: Artwork, onDismiss: () -> Unit) {
     val widthCm = numbers.getOrNull(0) ?: (heightCm * artwork.image.aspectRatio)
     val humanCm = 170f
     Dialog(onDismissRequest = onDismiss) {
-        Surface(shape = RoundedCornerShape(32.dp), color = MaterialTheme.colorScheme.surface) {
+        Surface(shape = RoundedCornerShape(1.dp), color = MaterialTheme.colorScheme.surface) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Text("Scale Check", style = MaterialTheme.typography.titleLarge)
                 Text(
@@ -229,7 +229,7 @@ fun ScaleCheckDialog(artwork: Artwork, onDismiss: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(340.dp)
-                        .clip(RoundedCornerShape(24.dp))
+                        .clip(RoundedCornerShape(1.dp))
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.BottomCenter,
                 ) {
@@ -308,7 +308,7 @@ fun ShareCardDialog(
     var ratio by remember { mutableStateOf(ShareRatio.STORY) }
     var font by remember { mutableStateOf(ShareFont.SANS) }
     Dialog(onDismissRequest = onDismiss) {
-        Surface(shape = RoundedCornerShape(32.dp), color = MaterialTheme.colorScheme.surface) {
+        Surface(shape = RoundedCornerShape(1.dp), color = MaterialTheme.colorScheme.surface) {
             Column(
                 modifier = Modifier
                     .padding(24.dp)
@@ -367,7 +367,7 @@ fun JournalEditorDialog(
     var mood by remember { mutableStateOf(Mood.REFLECTIVE) }
     var tags by remember { mutableStateOf(artwork.tags.take(2).joinToString(", ")) }
     Dialog(onDismissRequest = onDismiss) {
-        Surface(shape = RoundedCornerShape(32.dp), color = MaterialTheme.colorScheme.surface) {
+        Surface(shape = RoundedCornerShape(1.dp), color = MaterialTheme.colorScheme.surface) {
             Column(
                 modifier = Modifier
                     .padding(24.dp)
@@ -425,7 +425,7 @@ fun JournalEditorDialog(
 @Composable
 fun LayerDialog(layer: ArtworkLayer, onDismiss: () -> Unit) {
     Dialog(onDismissRequest = onDismiss) {
-        Surface(shape = RoundedCornerShape(32.dp), color = MaterialTheme.colorScheme.surface) {
+        Surface(shape = RoundedCornerShape(1.dp), color = MaterialTheme.colorScheme.surface) {
             Column(modifier = Modifier.padding(20.dp)) {
                 Text(layer.label, style = MaterialTheme.typography.titleLarge)
                 Text(
@@ -442,7 +442,7 @@ fun LayerDialog(layer: ArtworkLayer, onDismiss: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(400.dp)
-                        .clip(RoundedCornerShape(20.dp)),
+                        .clip(RoundedCornerShape(1.dp)),
                 )
                 Spacer(Modifier.height(10.dp))
                 TextButton(onClick = onDismiss) { Text("Close") }

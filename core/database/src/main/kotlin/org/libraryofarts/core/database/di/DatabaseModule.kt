@@ -10,8 +10,7 @@ import org.libraryofarts.core.database.ArtworkDao
 import org.libraryofarts.core.database.CollectionDao
 import org.libraryofarts.core.database.JournalDao
 import org.libraryofarts.core.database.LearningDao
-import org.libraryofarts.core.database.LibraryDatabase
-import org.libraryofarts.core.database.LibraryDatabaseFactory
+import org.libraryofarts.core.database.LibraryDatabaseHolder
 import org.libraryofarts.core.database.PackDao
 import org.libraryofarts.core.database.ProgressDao
 import org.libraryofarts.core.database.SearchDao
@@ -29,17 +28,17 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideDatabase(
+    fun provideDatabaseHolder(
         @ApplicationContext context: Context,
         key: SecureDatabaseKey,
-    ): LibraryDatabase = LibraryDatabaseFactory.create(context, key.passphrase())
+    ): LibraryDatabaseHolder = LibraryDatabaseHolder(context, key)
 
-    @Provides fun artworkDao(db: LibraryDatabase): ArtworkDao = db.artworkDao()
-    @Provides fun journalDao(db: LibraryDatabase): JournalDao = db.journalDao()
-    @Provides fun collectionDao(db: LibraryDatabase): CollectionDao = db.collectionDao()
-    @Provides fun tasteDao(db: LibraryDatabase): TasteDao = db.tasteDao()
-    @Provides fun packDao(db: LibraryDatabase): PackDao = db.packDao()
-    @Provides fun learningDao(db: LibraryDatabase): LearningDao = db.learningDao()
-    @Provides fun progressDao(db: LibraryDatabase): ProgressDao = db.progressDao()
-    @Provides fun searchDao(db: LibraryDatabase): SearchDao = db.searchDao()
+    @Provides fun artworkDao(holder: LibraryDatabaseHolder): ArtworkDao = holder.get().artworkDao()
+    @Provides fun journalDao(holder: LibraryDatabaseHolder): JournalDao = holder.get().journalDao()
+    @Provides fun collectionDao(holder: LibraryDatabaseHolder): CollectionDao = holder.get().collectionDao()
+    @Provides fun tasteDao(holder: LibraryDatabaseHolder): TasteDao = holder.get().tasteDao()
+    @Provides fun packDao(holder: LibraryDatabaseHolder): PackDao = holder.get().packDao()
+    @Provides fun learningDao(holder: LibraryDatabaseHolder): LearningDao = holder.get().learningDao()
+    @Provides fun progressDao(holder: LibraryDatabaseHolder): ProgressDao = holder.get().progressDao()
+    @Provides fun searchDao(holder: LibraryDatabaseHolder): SearchDao = holder.get().searchDao()
 }

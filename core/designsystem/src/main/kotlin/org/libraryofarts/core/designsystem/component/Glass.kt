@@ -14,9 +14,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,9 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -34,21 +31,20 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import org.libraryofarts.core.designsystem.theme.LibraryColors
 
 /**
- * A frosted glass surface. We deliberately use a translucent tonal fill and a
- * hairline border instead of a real backdrop blur on every card: it looks the
- * same, costs far less GPU time, and works on every API level. Callers that
- * want an actual blur can pass [blurred] (API 31+, silently degrades).
+ * A catalogue plate: an opaque paper surface with a single hairline rule.
+ * Earlier versions used translucent "glass" panels and soft shadows; those
+ * made every screen look the same. The flat plate lets the artwork supply the
+ * colour and keeps text contrast high on every device.
  */
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(28.dp),
-    tint: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.72f),
-    borderColor: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
-    elevation: Dp = 2.dp,
+    shape: Shape = RoundedCornerShape(2.dp),
+    tint: Color = MaterialTheme.colorScheme.surface,
+    borderColor: Color = MaterialTheme.colorScheme.outlineVariant,
+    elevation: Dp = 0.dp,
     onClick: (() -> Unit)? = null,
     content: @Composable () -> Unit,
 ) {
@@ -59,7 +55,6 @@ fun GlassCard(
     }
     Box(
         modifier = modifier
-            .shadow(elevation, shape, clip = false, ambientColor = Color.Black.copy(alpha = 0.18f))
             .clip(shape)
             .background(tint)
             .border(1.dp, borderColor, shape)
@@ -77,42 +72,49 @@ fun SectionHeader(
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (subtitle != null) {
-                Spacer(Modifier.height(2.dp))
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.Bottom,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (subtitle != null) {
+                    Spacer(Modifier.height(3.dp))
+                    Text(
+                        text = subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            if (actionLabel != null && onAction != null) {
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    text = actionLabel.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(2.dp))
+                        .clickable(onClick = onAction)
+                        .padding(horizontal = 6.dp, vertical = 6.dp),
                 )
             }
         }
-        if (actionLabel != null && onAction != null) {
-            Spacer(Modifier.width(12.dp))
-            Text(
-                text = actionLabel,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .clickable(onClick = onAction)
-                    .padding(horizontal = 8.dp, vertical = 6.dp),
-            )
-        }
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = 20.dp),
+            thickness = 1.dp,
+            color = MaterialTheme.colorScheme.outlineVariant,
+        )
     }
 }
 
@@ -123,25 +125,26 @@ fun LibraryPill(
     selected: Boolean = false,
     onClick: (() -> Unit)? = null,
 ) {
-    val bg = if (selected) {
-        MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
-    } else {
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
-    }
-    val fg = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    val bg = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent
+    val fg = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
     Box(
         modifier = modifier
-            .clip(CircleShape)
+            .clip(RoundedCornerShape(2.dp))
             .background(bg)
             .border(
                 1.dp,
-                if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.4f) else Color.Transparent,
-                CircleShape,
+                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                RoundedCornerShape(2.dp),
             )
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 14.dp, vertical = 8.dp),
+            .padding(horizontal = 11.dp, vertical = 7.dp),
     ) {
-        Text(text, style = MaterialTheme.typography.labelMedium, color = fg, maxLines = 1)
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = fg,
+            maxLines = 1,
+        )
     }
 }
 
@@ -165,11 +168,11 @@ fun EmptyState(
                 imageVector = icon,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(40.dp),
+                modifier = Modifier.size(34.dp),
             )
             Spacer(Modifier.height(16.dp))
         }
-        Text(title, style = MaterialTheme.typography.titleMedium)
+        Text(title, style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(8.dp))
         Text(
             message,
@@ -192,21 +195,30 @@ fun ArtButton(
     icon: ImageVector? = null,
     filled: Boolean = true,
 ) {
-    val bg = if (filled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
-    val fg = if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+    val bg = if (filled) MaterialTheme.colorScheme.primary else Color.Transparent
+    val fg = if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
     Row(
         modifier = modifier
-            .clip(CircleShape)
+            .clip(RoundedCornerShape(2.dp))
             .background(bg)
+            .border(
+                1.dp,
+                if (filled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                RoundedCornerShape(2.dp),
+            )
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 20.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
-            Icon(icon, null, tint = fg, modifier = Modifier.size(18.dp))
+            Icon(icon, null, tint = fg, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(8.dp))
         }
-        Text(label, style = MaterialTheme.typography.labelLarge, color = fg)
+        Text(
+            label.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = fg,
+        )
     }
 }
 
@@ -221,8 +233,8 @@ fun LoadingPane(modifier: Modifier = Modifier, label: String = "Gathering artwor
     ) {
         CircularProgressIndicator(
             color = MaterialTheme.colorScheme.primary,
-            strokeWidth = 2.dp,
-            modifier = Modifier.size(28.dp),
+            strokeWidth = 1.dp,
+            modifier = Modifier.size(24.dp),
         )
         Spacer(Modifier.height(14.dp))
         Text(
@@ -235,34 +247,11 @@ fun LoadingPane(modifier: Modifier = Modifier, label: String = "Gathering artwor
 
 @Composable
 fun SoftBackdrop(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Box(modifier = modifier.fillMaxSize()) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.background,
-                            MaterialTheme.colorScheme.surface,
-                            MaterialTheme.colorScheme.background,
-                        ),
-                    ),
-                ),
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            LibraryColors.Vermilion.copy(alpha = 0.10f),
-                            Color.Transparent,
-                        ),
-                        center = Offset(0.15f, 0.05f),
-                        radius = 900f,
-                    ),
-                ),
-        )
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+    ) {
         content()
     }
 }
@@ -272,6 +261,6 @@ fun VerticalHairline(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .width(1.dp)
-            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+            .background(MaterialTheme.colorScheme.outlineVariant),
     )
 }

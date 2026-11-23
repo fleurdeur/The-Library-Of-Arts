@@ -1,6 +1,7 @@
 package org.libraryofarts.core.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,8 +37,9 @@ fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .size(42.dp)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)),
+            .clip(RoundedCornerShape(2.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(2.dp)),
         contentAlignment = Alignment.Center,
     ) {
         androidx.compose.material3.IconButton(onClick = onClick, modifier = Modifier.fillMaxSize()) {
@@ -48,16 +50,29 @@ fun BackButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 @Composable
 fun ScreenTitle(title: String, subtitle: String? = null, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
-        Text(title, style = MaterialTheme.typography.headlineMedium)
+    Column(modifier = modifier.padding(horizontal = 20.dp, vertical = 14.dp)) {
+        Text(
+            "THE GREAT LIBRARY OF ARTS",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(title, style = MaterialTheme.typography.headlineLarge)
         if (subtitle != null) {
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 subtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        Spacer(Modifier.height(14.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(MaterialTheme.colorScheme.outlineVariant),
+        )
     }
 }
 
@@ -90,8 +105,8 @@ fun OfflineBanner(onRetry: (() -> Unit)? = null, modifier: Modifier = Modifier) 
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(2.dp))
+            .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -743,7 +743,7 @@ object SeedArtworks {
             dimensions = "180 × 180 cm",
             museum = MuseumCatalog.europeana,
             location = "Österreichische Galerie Belvedere, Vienna",
-            file = "The Kiss - Gustav Klimt - Google Art Project.jpg",
+            file = "The Kiss - Gustav Klimt - Google Cultural Institute.jpg",
             width = 1600,
             height = 1600,
             description = "A couple embrace inside a shimmering field of gold, their bodies disappearing into pattern. Klimt turns intimacy into ornament, while the woman's closed eyes keep the moment private.",

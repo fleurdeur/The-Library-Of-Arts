@@ -80,6 +80,7 @@ enum class ArtSource(val id: String, val label: String) {
     PARIS_MUSEES("paris-musees", "Paris Musées"),
     GETTY("getty", "The J. Paul Getty Museum"),
     WIKIMEDIA("wikimedia", "Wikimedia Commons"),
+    GOOGLE_ARTS("google-arts", "Google Arts & Culture"),
     OFFLINE_PACK("pack", "Offline Art Pack");
 
     companion object {

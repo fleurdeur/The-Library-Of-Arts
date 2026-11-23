@@ -56,7 +56,7 @@ fun ArtworkViewer(
 
     Box(
         modifier = modifier
-            .clip(androidx.compose.foundation.shape.RoundedCornerShape(32.dp))
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(1.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
         AsyncImage(

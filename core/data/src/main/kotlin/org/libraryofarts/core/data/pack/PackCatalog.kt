@@ -1,81 +1,63 @@
 package org.libraryofarts.core.data.pack
 
-import org.libraryofarts.core.common.BuildInfo
 import org.libraryofarts.core.model.PackManifest
 import org.libraryofarts.core.model.PackQuality
 
 /**
- * The public pack catalogue. Pack archives live on your own CDN — Play Asset
- * Delivery's limits make it unsuitable for 500 MB–5 GB art packs. Replace the
- * example CDN with your own and publish signed manifests alongside the files.
- *
- * A publisher produces a pack with:
- *   manifest.json, artworks.jsonl, images/<sourceId>.jpg, scan-index.json
- * then signs the manifest and publishes its SHA-256. See README → Offline packs.
+ * Published offline packs. The archives and their SHA-256 values are attached
+ * to the public `packs-v1` GitHub release, so the catalogue works for anyone
+ * who installs the app without any extra configuration. Every pack contains a
+ * JSONL artwork index plus public-domain image files; the installer verifies
+ * the checksum before unpacking and rejects unsafe paths.
  */
 object PackCatalog {
-    private const val CDN = BuildInfo.DEFAULT_CDN_BASE
+    private const val RELEASE = "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/packs-v1/"
 
     val packs: List<PackManifest> = listOf(
         PackManifest(
-            id = "renaissance-masters",
-            title = "Renaissance Masters",
-            description = "Leonardo, Botticelli and their contemporaries, with deep-zoom images and curated details.",
-            period = "Renaissance",
-            genre = "Painting",
-            quality = PackQuality.GALLERY,
-            artworkCount = 420,
-            sizeBytes = 2_400_000_000,
-            version = 3,
-            downloadUrl = "${CDN}renaissance-masters-v3.zip",
-            sha256 = "0000000000000000000000000000000000000000000000000000000000000000",
-            releasedAt = 1_760_000_000_000,
-            licenseSummary = "Public domain works; museum credit lines included in every record.",
+            id = "starter-salon",
+            title = "Starter Salon",
+            description = "Twenty-three public-domain touchstones, from Bruegel's harvest to Van Gogh's cypresses. A complete first gallery that works with no signal.",
+            period = "World",
+            genre = "Mixed",
+            quality = PackQuality.THUMBNAIL,
+            artworkCount = 23,
+            sizeBytes = 6_392_312,
+            version = 1,
+            downloadUrl = "${RELEASE}starter-salon.zip",
+            sha256 = "ce9be93084f762f2f0c5d9449b6861111a6497ea8b3a9c2fc23f3d7f2fe63c10",
+            releasedAt = 1_763_856_000_000,
+            licenseSummary = "Public-domain reproductions via Wikimedia Commons; credit lines included in every record.",
         ),
         PackManifest(
             id = "impressionism",
             title = "Impressionism & After",
-            description = "Monet, Renoir, Degas, Cassatt, Van Gogh and Seurat — light, colour and modern life.",
+            description = "Monet, Renoir, Cassatt, Seurat and Van Gogh — light, weather and modern life in six close-looking plates.",
             period = "Impressionism",
             genre = "Painting",
-            quality = PackQuality.STANDARD,
-            artworkCount = 680,
-            sizeBytes = 1_600_000_000,
-            version = 5,
-            downloadUrl = "${CDN}impressionism-v5.zip",
-            sha256 = "0000000000000000000000000000000000000000000000000000000000000000",
-            releasedAt = 1_760_000_000_000,
-            licenseSummary = "Public domain and CC0 reproductions.",
+            quality = PackQuality.THUMBNAIL,
+            artworkCount = 6,
+            sizeBytes = 2_178_013,
+            version = 1,
+            downloadUrl = "${RELEASE}impressionism.zip",
+            sha256 = "0829834ca0f53b78dfccc6ec073892ebef35696dfa7484603819c1cd47a7244e",
+            releasedAt = 1_763_856_000_000,
+            licenseSummary = "Public-domain reproductions via Wikimedia Commons; credit lines included in every record.",
         ),
         PackManifest(
             id = "dutch-golden-age",
             title = "Dutch Golden Age",
-            description = "Rembrandt, Vermeer and the quiet drama of the Dutch interior.",
+            description = "Rembrandt, Vermeer and the quiet drama of the Dutch interior — seven works for slow, low-light looking.",
             period = "Baroque",
             genre = "Painting",
-            quality = PackQuality.LOSSLESS,
-            artworkCount = 240,
-            sizeBytes = 4_600_000_000,
-            version = 2,
-            downloadUrl = "${CDN}dutch-golden-age-v2.zip",
-            sha256 = "0000000000000000000000000000000000000000000000000000000000000000",
-            releasedAt = 1_760_000_000_000,
-            licenseSummary = "Public domain. High-resolution masters for brushstroke study.",
-        ),
-        PackManifest(
-            id = "world-gems",
-            title = "World Gems",
-            description = "A compact world tour: Japan, Europe, North America and beyond.",
-            period = "World",
-            genre = "Mixed",
             quality = PackQuality.THUMBNAIL,
-            artworkCount = 900,
-            sizeBytes = 520_000_000,
+            artworkCount = 7,
+            sizeBytes = 1_962_309,
             version = 1,
-            downloadUrl = "${CDN}world-gems-v1.zip",
-            sha256 = "0000000000000000000000000000000000000000000000000000000000000000",
-            releasedAt = 1_760_000_000_000,
-            licenseSummary = "Public domain and openly licensed works only.",
+            downloadUrl = "${RELEASE}dutch-golden-age.zip",
+            sha256 = "80bb1914409134da194140638f7524ebb4b9e64c5c9b560a0b1ccbff864dfce2",
+            releasedAt = 1_763_856_000_000,
+            licenseSummary = "Public-domain reproductions via Wikimedia Commons; credit lines included in every record.",
         ),
     )
 

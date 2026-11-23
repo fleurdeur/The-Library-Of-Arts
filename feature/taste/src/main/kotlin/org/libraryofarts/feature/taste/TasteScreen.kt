@@ -114,7 +114,7 @@ fun TasteProfileScreen(
                     Spacer(Modifier.height(12.dp))
                     Row(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(18.dp))
+                            .clip(RoundedCornerShape(1.dp))
                             .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -280,7 +280,7 @@ private fun InterestRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 5.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(1.dp))
             .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.45f))
             .padding(start = 12.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
     ) {

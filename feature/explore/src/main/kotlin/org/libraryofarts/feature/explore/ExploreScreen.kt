@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +41,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -193,7 +195,7 @@ private fun ExploreScreen(
             contentPadding = PaddingValues(bottom = 120.dp),
         ) {
             item("title") {
-                ScreenTitle("Explore", "Eleven museums, one library. Search, wander, and follow your eye.")
+                ScreenTitle("Explore", "Twelve sources, one library. Search the open collection, wander by century, or follow a colour.")
             }
             item("search") {
                 Row(
@@ -206,27 +208,32 @@ private fun ExploreScreen(
                         value = state.filter.query,
                         onValueChange = onQuery,
                         modifier = Modifier.weight(1f),
-                        placeholder = { Text("Search artists, works, moods…") },
-                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        placeholder = { Text("Artist, work, mood, museum…") },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp)) },
                         trailingIcon = {
                             if (state.filter.query.isNotEmpty()) {
                                 IconButton(onClick = { onQuery("") }) {
-                                    Icon(Icons.Default.Clear, contentDescription = "Clear search")
+                                    Icon(Icons.Default.Clear, contentDescription = "Clear search", modifier = Modifier.size(18.dp))
                                 }
                             }
                         },
                         singleLine = true,
-                        shape = RoundedCornerShape(22.dp),
+                        shape = RoundedCornerShape(1.dp),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     )
                     Spacer(Modifier.width(8.dp))
                     Box(
                         modifier = Modifier
-                            .size(52.dp)
-                            .clip(CircleShape)
+                            .size(56.dp)
+                            .border(
+                                1.dp,
+                                if (state.filter.activeFilterCount > 0) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.outlineVariant,
+                                RoundedCornerShape(1.dp),
+                            )
                             .background(
                                 if (state.filter.activeFilterCount > 0) MaterialTheme.colorScheme.primary
-                                else MaterialTheme.colorScheme.surfaceVariant,
+                                else Color.Transparent,
                             )
                             .clickable(onClick = onOpenFilters),
                         contentAlignment = Alignment.Center,
@@ -235,26 +242,38 @@ private fun ExploreScreen(
                             Icons.Default.Tune,
                             contentDescription = "Filters",
                             tint = if (state.filter.activeFilterCount > 0) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(19.dp),
                         )
                     }
                 }
             }
             item("modes") {
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(ExploreMode.entries, key = { it.name }) { mode ->
-                        LibraryPill(mode.label, selected = state.mode == mode, onClick = { onMode(mode) })
-                    }
-                }
+                ExploreTabs(selected = state.mode, onSelect = onMode)
             }
             when (state.mode) {
                 ExploreMode.BROWSE -> {
                     item("quickfilters") {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                "THE OPEN COLLECTION",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                            Text(
+                                "${lazyResults.itemCount} WORKS",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                         LazyRow(
                             contentPadding = PaddingValues(horizontal = 20.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
                         ) {
                             items(FilterOptions.genres) { genre ->
                                 LibraryPill(genre, selected = genre in state.filter.genres, onClick = { onToggleGenre(genre) })
@@ -289,23 +308,30 @@ private fun ExploreScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(32.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
+                                    .padding(horizontal = 20.dp, vertical = 28.dp)
+                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(1.dp))
+                                    .padding(22.dp),
                             ) {
-                                Text("Nothing in that corner yet", style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    "NO WORKS IN THIS CORNER",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                                Spacer(Modifier.height(6.dp))
+                                Text("Nothing in that corner yet", style = MaterialTheme.typography.titleLarge)
                                 Text(
                                     "Try a broader word, clear a filter, or browse a museum map.",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
-                                Spacer(Modifier.height(10.dp))
+                                Spacer(Modifier.height(12.dp))
                                 ArtButton("Clear filters", onClearFilters, filled = false)
                             }
                         }
                     }
                     item("results-header") {
                         if (lazyResults.itemCount > 0) {
-                            SectionHeader("Results", subtitle = "${lazyResults.itemCount} works loaded from your library and the museums")
+                            SectionHeader("Selected works", subtitle = "${lazyResults.itemCount} works from your library and the museums")
                         }
                     }
                     items(lazyResults.itemCount, key = { index -> lazyResults.peek(index)?.id ?: index }) { index ->
@@ -426,6 +452,39 @@ private fun locate(
 }
 
 @Composable
+private fun ExploreTabs(selected: ExploreMode, onSelect: (ExploreMode) -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 20.dp),
+            horizontalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            items(ExploreMode.entries, key = { it.name }) { mode ->
+                val active = selected == mode
+                Column(
+                    modifier = Modifier.clickable { onSelect(mode) },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        mode.label.uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 14.dp),
+                    )
+                    Box(
+                        modifier = Modifier
+                            .height(2.dp)
+                            .width(if (active) 28.dp else 0.dp)
+                            .background(MaterialTheme.colorScheme.primary),
+                    )
+                }
+            }
+        }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+    }
+}
+
+@Composable
 private fun MuseumWorldMap(museums: List<Museum>, onMuseum: (Museum) -> Unit) {
     var selected by remember { mutableStateOf<Museum?>(null) }
     val markerPositions = remember(museums) {
@@ -441,8 +500,9 @@ private fun MuseumWorldMap(museums: List<Museum>, onMuseum: (Museum) -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(320.dp)
-                .clip(RoundedCornerShape(28.dp))
-                .background(Color(0xFF12232E)),
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(1.dp))
+                .clip(RoundedCornerShape(1.dp))
+                .background(Color(0xFF16231F)),
         ) {
             Canvas(
                 modifier = Modifier
@@ -466,9 +526,9 @@ private fun MuseumWorldMap(museums: List<Museum>, onMuseum: (Museum) -> Unit) {
                         }
                     },
             ) {
-                val ocean = Color(0xFF12232E)
+                val ocean = Color(0xFF16231F)
                 drawRect(ocean)
-                val land = Color(0xFF3D4F48)
+                val land = Color(0xFFE9E2D4)
                 fun p(x: Float, y: Float) = Offset(x * size.width, y * size.height)
                 // Rough, stylised continents — legible at phone size, no tile server needed.
                 val northAmerica = Path().apply {
@@ -511,21 +571,21 @@ private fun MuseumWorldMap(museums: List<Museum>, onMuseum: (Museum) -> Unit) {
                 }
                 listOf(northAmerica, southAmerica, europeAfrica, asia, australia).forEach {
                     drawPath(it, land)
-                    drawPath(it, Color(0xFF6E7F6A).copy(alpha = 0.35f), style = Stroke(width = 1.5f))
+                    drawPath(it, Color(0xFF16231F), style = Stroke(width = 1.2f))
                 }
                 // graticule
                 for (i in 1..5) {
                     drawLine(Color.White.copy(alpha = 0.05f), Offset(0f, size.height * i / 6f), Offset(size.width, size.height * i / 6f))
                 }
                 markerPositions.values.forEach { position ->
-                    drawCircle(Color(0xFFE07A5F), radius = 7f, center = Offset(position.x * size.width, position.y * size.height))
+                    drawCircle(Color(0xFFA63C26), radius = 6f, center = Offset(position.x * size.width, position.y * size.height))
                     drawCircle(Color.White, radius = 2.5f, center = Offset(position.x * size.width, position.y * size.height))
                 }
             }
             Text(
-                "Museum world map · offline",
+                "THE MUSEUM ATLAS  ·  OFFLINE",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.6f),
+                color = Color(0xFFE9E2D4).copy(alpha = 0.8f),
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(14.dp),
@@ -807,6 +867,9 @@ private fun MuseumGuideDialog(
 ) {
     val context = LocalContext.current
     val narrator = remember(context) { org.libraryofarts.core.media.Narrator(context) }
+    DisposableEffect(narrator) {
+        onDispose { narrator.release() }
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(museum.name) },
@@ -902,7 +965,7 @@ private fun ArtistGraph(connections: List<org.libraryofarts.core.model.ArtistCon
         modifier = Modifier
             .fillMaxWidth()
             .height(210.dp)
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(1.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
     ) {
         val center = Offset(size.width / 2, size.height / 2)

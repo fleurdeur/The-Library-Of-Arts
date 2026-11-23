@@ -10,20 +10,25 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.AutoStories
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Home
@@ -32,10 +37,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -48,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
@@ -177,32 +180,19 @@ private fun LibraryApp(prefs: UserPreferences) {
 
     Row(modifier = Modifier.fillMaxSize()) {
         if (wide && isTop) {
-            NavigationRail {
-                Spacer(Modifier.height(24.dp))
-                topDestinations.forEach { destination ->
-                    NavigationRailItem(
-                        selected = currentRoute == destination.route,
-                        onClick = { navigateTop(nav, destination.route) },
-                        icon = { Icon(destination.icon, contentDescription = destination.label) },
-                        label = { Text(destination.label) },
-                    )
-                }
-            }
+            LibraryRail(
+                currentRoute = currentRoute,
+                onSelect = { navigateTop(nav, it) },
+            )
         }
         Scaffold(
             modifier = Modifier.weight(1f),
             bottomBar = {
                 if (!wide && isTop) {
-                    NavigationBar {
-                        topDestinations.forEach { destination ->
-                            NavigationBarItem(
-                                selected = currentRoute == destination.route,
-                                onClick = { navigateTop(nav, destination.route) },
-                                icon = { Icon(destination.icon, contentDescription = destination.label) },
-                                label = { Text(destination.label) },
-                            )
-                        }
-                    }
+                    LibraryBottomBar(
+                        currentRoute = currentRoute,
+                        onSelect = { navigateTop(nav, it) },
+                    )
                 }
             },
         ) { padding ->
@@ -393,6 +383,103 @@ private fun LibraryApp(prefs: UserPreferences) {
 }
 
 @Composable
+private fun LibraryBottomBar(currentRoute: String?, onSelect: (String) -> Unit) {
+    Column(modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
+        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .height(66.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            topDestinations.forEach { destination ->
+                val selected = currentRoute == destination.route
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clickable { onSelect(destination.route) },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Icon(
+                        destination.icon,
+                        contentDescription = destination.label,
+                        tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        destination.label.uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(3.dp))
+                    Box(
+                        modifier = Modifier
+                            .width(22.dp)
+                            .height(2.dp)
+                            .background(
+                                if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                            ),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LibraryRail(currentRoute: String?, onSelect: (String) -> Unit) {
+    Column(
+        modifier = Modifier
+            .width(94.dp)
+            .fillMaxHeight()
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(vertical = 26.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            "GLA",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(Modifier.height(30.dp))
+        topDestinations.forEach { destination ->
+            val selected = currentRoute == destination.route
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onSelect(destination.route) }
+                    .padding(vertical = 14.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Icon(
+                    destination.icon,
+                    contentDescription = destination.label,
+                    tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.height(5.dp))
+                Text(
+                    destination.label.uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(5.dp))
+                Box(
+                    modifier = Modifier
+                        .width(22.dp)
+                        .height(1.dp)
+                        .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent),
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun LibraryMenu(onNavigate: (String) -> Unit) {
     val entries = listOf(
         Triple("Taste profile", "Your eye, on this device", Route.TASTE),
@@ -402,63 +489,77 @@ private fun LibraryMenu(onNavigate: (String) -> Unit) {
         Triple("Looking games", "Play, compare, scan", Route.GAMES),
         Triple("Scan a painting", "Identify a work offline", Route.SCAN),
     )
-    SoftBackdrop {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .navigationBarsPadding()
-                .padding(bottom = 20.dp),
-        ) {
-            Text(
-                "Your library",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-            )
-            Text(
-                "${SeedLearning.tours.size} tours · ${SeedLearning.lessons.size} lessons · everything on this device",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 24.dp),
-            )
-            Spacer(Modifier.height(12.dp))
-            LazyColumn {
-                items(entries) { (title, subtitle, route) ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onNavigate(route) }
-                            .padding(horizontal = 24.dp, vertical = 13.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .width(4.dp)
-                                .height(30.dp)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(MaterialTheme.colorScheme.primary),
-                        )
-                        Spacer(Modifier.width(14.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(title, style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                subtitle,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                        Icon(Icons.Default.AutoStories, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-                item {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(bottom = 20.dp),
+    ) {
+        Text(
+            "THE READING ROOM",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(horizontal = 24.dp),
+        )
+        Spacer(Modifier.height(6.dp))
+        Text(
+            "Your library",
+            style = MaterialTheme.typography.headlineLarge,
+            modifier = Modifier.padding(horizontal = 24.dp),
+        )
+        Text(
+            "${SeedLearning.tours.size} tours · ${SeedLearning.lessons.size} lessons · on this device",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
+        )
+        Spacer(Modifier.height(10.dp))
+        HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp), color = MaterialTheme.colorScheme.outlineVariant)
+        LazyColumn {
+            itemsIndexed(entries) { index, entry ->
+                val (title, subtitle, route) = entry
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onNavigate(route) }
+                        .padding(horizontal = 24.dp, vertical = 15.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text(
-                        "No account. No ads. No tracking.",
+                        (index + 1).toString().padStart(2, '0'),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.width(30.dp),
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(title, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            subtitle,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowForward,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(16.dp),
                     )
                 }
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+                )
+            }
+            item {
+                Text(
+                    "No account. No ads. No tracking.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 16.dp),
+                )
             }
         }
     }

@@ -90,7 +90,7 @@ fun ArWallRoute(artworkId: String, onBack: () -> Unit) {
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp)
                             .height(470.dp)
-                            .clip(RoundedCornerShape(28.dp))
+                            .clip(RoundedCornerShape(1.dp))
                             .background(Color(0xFF2B2420)),
                     ) {
                         if (hasCamera) {

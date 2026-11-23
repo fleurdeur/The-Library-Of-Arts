@@ -124,9 +124,20 @@ object MuseumCatalog {
         website = "https://commons.wikimedia.org",
     )
 
+    val googleArts = Museum(
+        id = "google-arts",
+        name = "Google Arts & Culture",
+        shortName = "Google Arts",
+        city = "Worldwide",
+        country = "Online",
+        latitude = 37.4220,
+        longitude = -122.0841,
+        website = "https://artsandculture.google.com",
+    )
+
     val all: List<Museum> = listOf(
         met, aic, rijksmuseum, cleveland, smithsonian, nga,
-        europeana, harvard, parisMusees, getty, wikimedia,
+        europeana, harvard, parisMusees, getty, wikimedia, googleArts,
     )
 
     fun byId(id: String): Museum = all.firstOrNull { it.id == id } ?: europeana
@@ -142,6 +153,7 @@ object MuseumCatalog {
         ArtSource.PARIS_MUSEES -> parisMusees
         ArtSource.GETTY -> getty
         ArtSource.WIKIMEDIA -> wikimedia
+        ArtSource.GOOGLE_ARTS -> googleArts
         ArtSource.OFFLINE_PACK -> met
     }
 }

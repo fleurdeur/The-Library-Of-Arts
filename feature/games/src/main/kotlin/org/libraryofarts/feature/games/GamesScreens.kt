@@ -267,7 +267,7 @@ fun QuizRoute(
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .aspectRatio(1.6f)
-                                            .clip(RoundedCornerShape(24.dp))
+                                            .clip(RoundedCornerShape(1.dp))
                                             .clipToBounds(),
                                     ) {
                                         ArtworkImage(
@@ -433,7 +433,7 @@ fun CompareRoute(onBack: () -> Unit, onOpenArtwork: (String) -> Unit, games: Gam
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp)
                             .height(380.dp)
-                            .clip(RoundedCornerShape(26.dp)),
+                            .clip(RoundedCornerShape(1.dp)),
                     ) {
                         ArtworkImage(first, Modifier.fillMaxSize())
                         Box(
@@ -543,7 +543,7 @@ fun KidsRoute(onBack: () -> Unit, onOpenArtwork: (String) -> Unit, games: GamesV
                                 .fillMaxWidth()
                                 .padding(horizontal = 20.dp)
                                 .height(340.dp)
-                                .clip(RoundedCornerShape(28.dp))
+                                .clip(RoundedCornerShape(1.dp))
                                 .clickable { onOpenArtwork(artwork.id) },
                         )
                     }
@@ -640,7 +640,7 @@ fun ScanRoute(
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp)
                             .height(420.dp)
-                            .clip(RoundedCornerShape(26.dp)),
+                            .clip(RoundedCornerShape(1.dp)),
                     ) {
                         AndroidView(
                             factory = { ctx ->

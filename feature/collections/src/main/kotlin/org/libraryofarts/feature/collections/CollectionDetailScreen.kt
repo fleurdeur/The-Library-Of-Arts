@@ -157,7 +157,7 @@ private fun CollectionArtworkTile(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(0.78f)
-                .clip(RoundedCornerShape(22.dp))
+                .clip(RoundedCornerShape(1.dp))
                 .clickable(onClick = onOpen),
         ) {
             ArtworkImage(artwork, Modifier.fillMaxSize())

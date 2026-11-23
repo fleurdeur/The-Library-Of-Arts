@@ -211,7 +211,7 @@ private fun CollectionCard(
             Box(
                 modifier = Modifier
                     .size(width = 100.dp, height = 116.dp)
-                    .clip(RoundedCornerShape(18.dp))
+                    .clip(RoundedCornerShape(1.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center,
             ) {

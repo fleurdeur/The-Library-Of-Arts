@@ -215,7 +215,7 @@ fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
             }
             item("packs-note") {
                 Text(
-                    "Packs are verified with SHA-256 and, when configured, an ECDSA signature before any file is unpacked. Zip-slip paths are rejected. Archives are hosted on the library's own CDN.",
+                    "Packs are verified with SHA-256 before any file is unpacked. Zip-slip paths are rejected. Archives are served from the project's public release downloads.",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
@@ -296,7 +296,7 @@ fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text("Version 1.0 · GPLv3 · Made for slow looking", style = MaterialTheme.typography.labelSmall)
+                    Text("Version 1.0.2 · GPLv3 · Made for slow looking", style = MaterialTheme.typography.labelSmall)
                     Text("Privacy questions: ${BuildInfo.PRIVACY_EMAIL}", style = MaterialTheme.typography.labelSmall)
                 }
             }
@@ -335,14 +335,16 @@ fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
 
 @Composable
 private fun SettingsSection(title: String, content: @Composable () -> Unit) {
-    Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
-        Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-        Spacer(Modifier.height(6.dp))
-        GlassCard(modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                content()
-            }
-        }
+    Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)) {
+        Text(
+            title.uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(Modifier.height(7.dp))
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        Spacer(Modifier.height(10.dp))
+        content()
     }
 }
 

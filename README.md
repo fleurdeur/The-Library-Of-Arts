@@ -42,7 +42,8 @@
     <td width="50%" valign="top">
 
 #### A museum in your pocket
-- **Eleven museum sources** normalized into one Artwork model.
+- **Twelve sources** normalized into one Artwork model, including Google Arts & Culture discovery.
+- **A printed-catalogue interface** — serif titles, full-bleed plates, hairline rules and generous margins, not glass cards or template dashboards.
 - **Daily hero work** with genre rows, Continue exploring, Because you viewed, On this day and Trending.
 - **On-device taste profile** with 45-day interest decay, muted interests, pinned interests and a discovery reserve.
 - **Plain-language reasons** for every recommendation, with no hidden weights.
@@ -99,7 +100,7 @@
 
 <div align="center">
 
-<h1><a id="museums"></a>Eleven museums</h1>
+<h1><a id="museums"></a>Twelve sources</h1>
 
 </div>
 
@@ -118,8 +119,9 @@ Every source is mapped into the same immutable model, so search, packs, backups 
 | Paris Musées | Collections API | Key optional |
 | Getty | Museum API | Key optional |
 | Wikimedia Commons | MediaWiki API | Rate-limit aware thumbnails |
+| Google Arts & Culture | Public painting index | Discovery only; rights stay with the holding collection |
 
-No API key is committed. Sources that require one stay disabled until you provide `SourceCredentials` through the Hilt module; the seed library and every offline feature work without any key.
+No API key is committed. Keyless sources (The Met, Art Institute, Cleveland, NGA, Wikimedia, Google Arts & Culture) work immediately; key-gated adapters stay disabled until configured through `SourceCredentials`. Google Arts & Culture records are always marked **verify source rights** rather than claimed as public domain. The seed library and every offline feature work without any key.
 
 ---
 
@@ -164,7 +166,7 @@ The interpretation feature belongs to you, not to a cloud service.
 
 </div>
 
-Packs are built for large archives — 500 MB to 5 GB — without pretending the network is reliable.
+Three real packs are published on the **[packs-v1 release](https://github.com/fleurdeur/The-Library-Of-Arts/releases/tag/packs-v1)**. They contain the JSONL index, public-domain image files and checksums the installer verifies.
 
 - **Resumable HTTP range downloads**, with progress and cancellation.
 - **Mandatory SHA-256 verification** before extraction.
@@ -173,9 +175,10 @@ Packs are built for large archives — 500 MB to 5 GB — without pretending the
 - **Free-space checks** before download and extraction.
 - **Room indexing** after install, and clean pack deletion.
 - **Delta metadata support** for future updates.
-- **Own CDN hosting** — Play Asset Delivery is not suitable for packs this size.
+- **Public release downloads** — no private CDN or account is required.
+- **Published now:** *Starter Salon* (23 works), *Impressionism & After* (6 works) and *Dutch Golden Age* (7 works). Install them from Settings → Offline packs; each archive is checksum-pinned in the app.
 
-The catalogue points at a placeholder CDN. Packs with the all-zero template checksum are shown as **Not published** and cannot be installed, so the app never pretends to download something that does not exist.
+The starter pack replaces the built-in seed records with local image copies, so the same plates work with the radio off. Pack deletion is clean and never removes journal entries or collections.
 
 ---
 
@@ -268,9 +271,9 @@ build-logic/             Convention plugins for application, library, Compose an
 core/
   common/                Result types, dates, crypto, connectivity, feature flags, dHash
   model/                 Normalized artwork, museum, learning, journal, collection, taste, pack
-  designsystem/          Theme, type, shapes, glass surfaces, haptics, bundled fonts
+  designsystem/          Catalogue theme, serif/Inter type, rules, haptics, bundled fonts
   database/              Room + SQLCipher, FTS5, DAOs, encrypted key handling
-  network/               Retrofit + Kotlinx Serialization, eleven museum sources, health
+  network/               Retrofit + Serialization, twelve sources, Google Arts discovery, health
   datastore/             Preferences and typed settings
   data/                  Repositories, seed library, recommender, packs, backup, PDF/share
   media/                 Media3 playback service and TTS narrator

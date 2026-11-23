@@ -28,6 +28,7 @@ import org.libraryofarts.core.network.source.AicSource
 import org.libraryofarts.core.network.source.ClevelandSource
 import org.libraryofarts.core.network.source.EuropeanaSource
 import org.libraryofarts.core.network.source.GettySource
+import org.libraryofarts.core.network.source.GoogleArtsCultureSource
 import org.libraryofarts.core.network.source.HarvardSource
 import org.libraryofarts.core.network.source.MetSource
 import org.libraryofarts.core.network.source.NationalGallerySource
@@ -85,4 +86,5 @@ abstract class SourceBindings {
     @Binds @IntoSet abstract fun harvard(source: HarvardSource): MuseumRemoteSource
     @Binds @IntoSet abstract fun paris(source: ParisMuseesSource): MuseumRemoteSource
     @Binds @IntoSet abstract fun getty(source: GettySource): MuseumRemoteSource
+    @Binds @IntoSet abstract fun googleArts(source: GoogleArtsCultureSource): MuseumRemoteSource
 }

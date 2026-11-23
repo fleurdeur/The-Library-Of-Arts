@@ -46,10 +46,10 @@ data class PackDelta(
 
 @Serializable
 enum class PackQuality(val label: String, val approxBytesPerImage: Long) {
-    THUMBNAIL("Thumbnail (500 MB class)", 250_000),
-    STANDARD("Standard (1–2 GB class)", 1_200_000),
-    GALLERY("Gallery (3–5 GB class)", 2_800_000),
-    LOSSLESS("Lossless masters (largest)", 6_000_000),
+    THUMBNAIL("Compact · 800 px", 250_000),
+    STANDARD("Standard · 1,600 px", 1_200_000),
+    GALLERY("Gallery · 2,400 px", 2_800_000),
+    LOSSLESS("Lossless masters", 6_000_000),
 }
 
 @Serializable

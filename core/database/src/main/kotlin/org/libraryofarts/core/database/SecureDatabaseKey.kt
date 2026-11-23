@@ -69,6 +69,28 @@ class SecureDatabaseKey(private val context: Context) {
                 return existing
             }
 
+        // Keystore wrapping can fail on some vendor devices. The private
+        // fallback file is part of the key chain and must be read before a new
+        // passphrase is generated, otherwise the next launch cannot open the
+        // database that was just created.
+        runCatching { fallbackPrefs.getString(KEY_FALLBACK, null) }
+            .getOrNull()
+            ?.takeIf { it.isNotBlank() }
+            ?.let { existing ->
+                cached = existing
+                return existing
+            }
+
+        // A database exists but none of its keys can be recovered. Keeping it
+        // would make every launch fail with "The library could not be opened".
+        // Rebuild a clean library instead; saved state cannot be recovered
+        // once the Android Keystore has discarded the wrapping key.
+        if (context.getDatabasePath(DB_NAME).exists()) {
+            runCatching { context.deleteDatabase(DB_NAME) }
+            runCatching { java.io.File(context.getDatabasePath(DB_NAME).path + "-wal").delete() }
+            runCatching { java.io.File(context.getDatabasePath(DB_NAME).path + "-shm").delete() }
+        }
+
         val generated = Crypto.randomPassphrase(32)
         val wrapped = runCatching { writeWrapped(generated) }.isSuccess
         if (!wrapped) {
@@ -143,7 +165,8 @@ class SecureDatabaseKey(private val context: Context) {
         generator.generateKey()
     }.getOrNull()
 
-    private companion object {
+    companion object {
+        const val DB_NAME = "library_of_arts.db"
         const val KEY_DB_PASSPHRASE = "db_passphrase_v1"
         const val PREFS_NAME = "loa_database_wrap"
         const val KEY_IV = "iv_v1"

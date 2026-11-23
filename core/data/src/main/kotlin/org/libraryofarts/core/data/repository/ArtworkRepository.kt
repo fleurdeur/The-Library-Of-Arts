@@ -69,12 +69,14 @@ class ArtworkRepository @Inject constructor(
     fun observeArtwork(id: String): Flow<Artwork?> = artworkDao.observeById(id).map { it?.toArtwork() }
 
     suspend fun refreshFromNetwork(query: String = ""): Int {
-        val result = network.search(query, page = 0, pageSize = 40)
+        val result = if (query.isBlank()) network.highlights(pageSize = 40) else network.search(query, page = 0, pageSize = 40)
         if (result.artworks.isNotEmpty()) {
             artworkDao.upsertAll(result.artworks.map { it.toEntity() })
         }
         return result.artworks.size
     }
+
+    suspend fun refreshHighlights(): Int = refreshFromNetwork("")
 
     suspend fun dailyArtwork(epochDay: Long): Artwork {
         val pool = artworkDao.random(12).mapNotNull { it.toArtwork() }
