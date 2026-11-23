@@ -87,7 +87,7 @@ class SettingsViewModel @Inject constructor(
         _message.value = null
     }
 
-    fun checkForUpdates(force: Boolean = true) {
+    fun checkForUpdates(force: Boolean = false) {
         if (_update.value.checking || _update.value.download.state == UpdateDownloadProgress.State.DOWNLOADING) return
         _update.update { it.copy(checking = true, permissionRequired = false) }
         viewModelScope.launch {
