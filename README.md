@@ -13,10 +13,10 @@
 
 <br/>
 
-[![Latest release](https://img.shields.io/github/v/release/fleurdeur/the-Library-Of-Arts?style=for-the-badge&labelColor=0d1117)](https://github.com/fleurdeur/the-Library-Of-Arts/releases)
-[![License](https://img.shields.io/github/license/fleurdeur/the-Library-Of-Arts?style=for-the-badge&labelColor=0d1117)](https://github.com/fleurdeur/the-Library-Of-Arts/blob/main/LICENSE)
-[![Downloads](https://img.shields.io/github/downloads/fleurdeur/the-Library-Of-Arts/total?style=for-the-badge&labelColor=0d1117)](https://github.com/fleurdeur/the-Library-Of-Arts/releases)
-[![Android](https://img.shields.io/badge/Android-8.0%2B-7ED9A0?style=for-the-badge&labelColor=0d1117)](https://github.com/fleurdeur/the-Library-Of-Arts/releases)
+[![Latest release](https://img.shields.io/github/v/release/fleurdeur/The-Library-Of-Arts?style=for-the-badge&labelColor=0d1117)](https://github.com/fleurdeur/The-Library-Of-Arts/releases)
+[![License](https://img.shields.io/github/license/fleurdeur/The-Library-Of-Arts?style=for-the-badge&labelColor=0d1117)](https://github.com/fleurdeur/The-Library-Of-Arts/blob/main/LICENSE)
+[![Downloads](https://img.shields.io/github/downloads/fleurdeur/The-Library-Of-Arts/total?style=for-the-badge&labelColor=0d1117)](https://github.com/fleurdeur/The-Library-Of-Arts/releases)
+[![Android](https://img.shields.io/badge/Android-8.0%2B-7ED9A0?style=for-the-badge&labelColor=0d1117)](https://github.com/fleurdeur/The-Library-Of-Arts/releases)
 
 <br/>
 
@@ -199,9 +199,9 @@ The catalogue points at a placeholder CDN. Packs with the all-zero template chec
 
 <h1><a id="download"></a>Download</h1>
 
-<a href="https://github.com/fleurdeur/the-Library-Of-Arts/releases" target="_blank" rel="noopener noreferrer"><img src="https://cdn.jsdelivr.net/gh/JMcrafter26/badges@main/src/assets/supported/android/cozy.svg" alt="Download for Android" height="55"/></a>
+<a href="https://github.com/fleurdeur/The-Library-Of-Arts/releases" target="_blank" rel="noopener noreferrer"><img src="https://cdn.jsdelivr.net/gh/JMcrafter26/badges@main/src/assets/supported/android/cozy.svg" alt="Download for Android" height="55"/></a>
 
-Grab the latest signed APK from **[Releases](https://github.com/fleurdeur/the-Library-Of-Arts/releases)**.
+Grab the latest signed APK from **[Releases](https://github.com/fleurdeur/The-Library-Of-Arts/releases)**.
 
 | Package | Best for | Size |
 | :--- | :--- | ---: |
@@ -221,7 +221,7 @@ Grab the latest signed APK from **[Releases](https://github.com/fleurdeur/the-Li
 <h1><a id="build"></a>Build</h1>
 
 ```bash
-git clone https://github.com/fleurdeur/the-Library-Of-Arts.git
+git clone https://github.com/fleurdeur/The-Library-Of-Arts.git
 cd the-Library-Of-Arts
 
 # Debug APKs for phone and Wear
