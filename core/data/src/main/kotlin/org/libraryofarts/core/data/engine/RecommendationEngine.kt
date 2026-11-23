@@ -91,9 +91,20 @@ class RecommendationEngine(
                 score = item.affinity,
             )
         }
-        // Interleave discovery so it never looks like an afterthought.
-        return feed.shuffled(random).sortedByDescending { it.reason == FeedReason.DISCOVERY && random.nextFloat() < 0.5f }
-            .ifEmpty { feed }
+        // Interleave discovery deliberately. A comparator that calls random()
+        // is not a valid ordering and can make TimSort throw; this is stable,
+        // transparent and still keeps discovery from looking like an afterthought.
+        val merged = mutableListOf<FeedItem>()
+        val curatedItems = feed.take(curated.size)
+        val remainingDiscovery = feed.drop(curated.size).toMutableList()
+        curatedItems.forEachIndexed { index, item ->
+            merged.add(item)
+            if (index % 3 == 2 && remainingDiscovery.isNotEmpty()) {
+                merged.add(remainingDiscovery.removeAt(0))
+            }
+        }
+        merged.addAll(remainingDiscovery)
+        return merged.take(limit).ifEmpty { feed.take(limit) }
     }
 
     fun becauseYouViewed(reference: Artwork, candidates: List<Artwork>, limit: Int = 12): List<FeedItem> {

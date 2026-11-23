@@ -140,6 +140,26 @@ fun HomeScreen(
                         item("offline") { OfflineBanner() }
                     }
 
+                    state.error?.let { message ->
+                        item("error") {
+                            Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+                                GlassCard(modifier = Modifier.fillMaxWidth()) {
+                                    Column(modifier = Modifier.padding(20.dp)) {
+                                        Text("The library needs a moment", style = MaterialTheme.typography.titleMedium)
+                                        Spacer(Modifier.height(6.dp))
+                                        Text(
+                                            message,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                        Spacer(Modifier.height(12.dp))
+                                        ArtButton("Try again", onClick = onRefresh)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     state.content?.let { content ->
                         item("hero") {
                             DailyHero(

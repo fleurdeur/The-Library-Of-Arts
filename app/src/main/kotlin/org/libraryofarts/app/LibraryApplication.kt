@@ -5,6 +5,8 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
+import android.util.Log
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -20,7 +22,10 @@ class LibraryApplication : Application(), Configuration.Provider {
     @Inject lateinit var workerFactory: HiltWorkerFactory
     @Inject lateinit var settings: SettingsRepository
 
-    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val exceptionHandler = CoroutineExceptionHandler { _, error ->
+        Log.e("LibraryApplication", "Background startup task failed without taking the app down.", error)
+    }
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO + exceptionHandler)
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
@@ -36,10 +41,14 @@ class LibraryApplication : Application(), Configuration.Provider {
                 .map { Triple(it.notificationsEnabled, it.notificationHour, it.notificationMinute) }
                 .distinctUntilChanged()
                 .collect { (enabled, hour, minute) ->
-                    if (enabled) {
-                        NotificationScheduler.schedule(this@LibraryApplication, hour, minute)
-                    } else {
-                        NotificationScheduler.cancel(this@LibraryApplication)
+                    runCatching {
+                        if (enabled) {
+                            NotificationScheduler.schedule(this@LibraryApplication, hour, minute)
+                        } else {
+                            NotificationScheduler.cancel(this@LibraryApplication)
+                        }
+                    }.onFailure { error ->
+                        Log.w("LibraryApplication", "Daily notification could not be scheduled.", error)
                     }
                 }
         }

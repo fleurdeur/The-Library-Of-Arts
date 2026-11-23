@@ -3,6 +3,7 @@ package org.libraryofarts.core.datastore
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.MutablePreferences
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -13,6 +14,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -62,7 +64,12 @@ class SettingsRepository @Inject constructor(
         val installId = stringPreferencesKey("install_id")
     }
 
-    val preferences: Flow<UserPreferences> = context.settingsDataStore.data.map { p ->
+    val preferences: Flow<UserPreferences> = context.settingsDataStore.data
+        .catch { error ->
+            android.util.Log.e("SettingsRepository", "Settings could not be read; using defaults.", error)
+            emit(emptyPreferences())
+        }
+        .map { p ->
         UserPreferences(
             onboardingComplete = p[Keys.onboarding] ?: false,
             themeMode = p[Keys.themeMode]?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() } ?: ThemeMode.SYSTEM,

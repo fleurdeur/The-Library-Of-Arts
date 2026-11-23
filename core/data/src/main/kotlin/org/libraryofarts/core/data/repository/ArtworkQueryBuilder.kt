@@ -2,6 +2,7 @@ package org.libraryofarts.core.data.repository
 
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteQuery
+import org.libraryofarts.core.database.FtsSupport
 import org.libraryofarts.core.model.ArtworkFilter
 import org.libraryofarts.core.model.SortOrder
 
@@ -9,7 +10,8 @@ internal object ArtworkQueryBuilder {
     fun build(filter: ArtworkFilter, limit: Int? = null, offset: Int = 0): SupportSQLiteQuery {
         val args = mutableListOf<Any?>()
         val sql = StringBuilder()
-        val useFts = filter.query.isNotBlank()
+        val hasQuery = filter.query.isNotBlank()
+        val useFts = hasQuery && FtsSupport.available
 
         if (useFts) {
             sql.append(
@@ -19,6 +21,13 @@ internal object ArtworkQueryBuilder {
             args += ftsExpression(filter.query)
         } else {
             sql.append("SELECT a.* FROM artworks a WHERE 1 = 1")
+            if (hasQuery) {
+                val like = "%${filter.query.trim()}%"
+                sql.append(
+                    " AND (a.title LIKE ? OR a.artistName LIKE ? OR a.description LIKE ? OR a.tagsCsv LIKE ? OR a.museumName LIKE ?)",
+                )
+                repeat(5) { args += like }
+            }
         }
 
         if (filter.genres.isNotEmpty()) {

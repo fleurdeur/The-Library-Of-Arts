@@ -1,6 +1,7 @@
 package org.libraryofarts.core.database
 
 import android.content.Context
+import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -54,6 +55,16 @@ object LibraryDatabaseFactory {
  * owns an FTS5 index maintained by triggers. Search stays entirely on-device
  * and works with installed packs when the device is offline.
  */
+/**
+ * True only after the FTS5 table and its triggers have been created
+ * successfully. Search falls back to LIKE when a vendor SQLite build omits
+ * FTS5, so an unusual device never crashes or returns an empty library.
+ */
+object FtsSupport {
+    @Volatile var available: Boolean = true
+        internal set
+}
+
 private object Fts5Callback : RoomDatabase.Callback() {
     override fun onCreate(db: SupportSQLiteDatabase) {
         createFts(db)
@@ -64,6 +75,14 @@ private object Fts5Callback : RoomDatabase.Callback() {
     }
 
     private fun createFts(db: SupportSQLiteDatabase) {
+        val created = runCatching { createFtsUnsafe(db) }.isSuccess
+        FtsSupport.available = created
+        if (!created) {
+            Log.w("LibraryDatabase", "FTS5 is unavailable; search will use the LIKE fallback.")
+        }
+    }
+
+    private fun createFtsUnsafe(db: SupportSQLiteDatabase) {
         db.execSQL(
             """
             CREATE VIRTUAL TABLE IF NOT EXISTS artwork_fts USING fts5(

@@ -9,9 +9,7 @@ import org.libraryofarts.core.model.StreakState
 import org.libraryofarts.core.model.TasteProfile
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlinx.datetime.Instant
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import kotlinx.coroutines.flow.first
 
 data class HomeSection(
     val id: String,
@@ -37,22 +35,22 @@ class HomeRepository @Inject constructor(
     private val streak: StreakRepository,
     private val engine: RecommendationEngine,
 ) {
-    suspend fun load(profile: TasteProfile): HomeContent {
+    suspend fun load(): HomeContent {
         artworks.seedIfNeeded()
+        val profile = taste.profile.first()
         val now = System.currentTimeMillis()
         val today = java.time.Instant.ofEpochMilli(now).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
         val epochDay = today.toEpochDay()
         val candidates = artworks.allCandidates(180)
         val daily = artworks.dailyArtwork(epochDay)
         val streakState = streak.recordViewing(daily.id)
-        val viewedIds = artworks.hiddenIds()
         val hidden = artworks.hiddenIds()
         val continueList = artworks.continueExploring(8).filterNot { it.id in hidden }
 
         val personalized = engine.buildFeed(
             candidates = candidates.filterNot { it.id in hidden },
             profile = profile,
-            viewedIds = viewedIds,
+            viewedIds = hidden,
             limit = 20,
         )
 

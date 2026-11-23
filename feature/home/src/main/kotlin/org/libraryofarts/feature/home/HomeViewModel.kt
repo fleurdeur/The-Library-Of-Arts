@@ -2,16 +2,14 @@ package org.libraryofarts.feature.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -22,11 +20,9 @@ import org.libraryofarts.core.data.repository.ArtworkRepository
 import org.libraryofarts.core.data.repository.CollectionRepository
 import org.libraryofarts.core.data.repository.HomeContent
 import org.libraryofarts.core.data.repository.HomeRepository
-import org.libraryofarts.core.data.repository.TasteRepository
 import org.libraryofarts.core.datastore.SettingsRepository
 import org.libraryofarts.core.datastore.UserPreferences
 import org.libraryofarts.core.model.Artwork
-import org.libraryofarts.core.model.TasteProfile
 
 data class HomeUiState(
     val loading: Boolean = true,
@@ -39,33 +35,25 @@ data class HomeUiState(
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val homeRepository: HomeRepository,
-    private val collections: CollectionRepository,
-    private val tasteRepository: TasteRepository,
+    private val homeRepository: Lazy<HomeRepository>,
+    private val collections: Lazy<CollectionRepository>,
+    private val artworkRepository: Lazy<ArtworkRepository>,
     private val settings: SettingsRepository,
     private val connectivity: ConnectivityObserver,
-    private val artworkRepository: ArtworkRepository,
 ) : ViewModel() {
     private val refreshTick = MutableStateFlow(0)
     private val _saved = MutableStateFlow<Set<String>>(emptySet())
     private val _online = MutableStateFlow(true)
-    private val _error = MutableStateFlow<String?>(null)
-    private val _loading = MutableStateFlow(true)
 
     val state: StateFlow<HomeUiState> = combine(
         settings.preferences,
-        tasteRepository.profile,
         _saved,
         _online,
         refreshTick,
-    ) { prefs, profile, saved, online, _ ->
-        HomeStateInput(prefs, profile, saved, online)
+    ) { prefs, saved, online, _ ->
+        HomeStateInput(prefs, saved, online)
     }.mapLatest { input ->
-        _loading.value = true
-        _error.value = null
-        runCatching {
-            homeRepository.load(input.profile)
-        }.fold(
+        runCatching { homeRepository.get().load() }.fold(
             onSuccess = { content ->
                 HomeUiState(
                     loading = false,
@@ -86,20 +74,35 @@ class HomeViewModel @Inject constructor(
             },
         )
     }.flowOn(AppDispatchers.io)
+        .catch { error ->
+            emit(
+                HomeUiState(
+                    loading = false,
+                    error = error.message ?: "The library could not be opened just now.",
+                ),
+            )
+        }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
     init {
-        viewModelScope.launch {
-            runCatching { collections.ensureFavorites() }
-            collections.observeArtworkIds(CollectionRepository.FAVORITES_ID).collect { ids ->
-                _saved.value = ids.toSet()
+        // Everything touching the encrypted database runs off the main thread
+        // and is individually guarded. A damaged keystore or database must
+        // never take the whole app down at launch.
+        viewModelScope.launch(AppDispatchers.io) {
+            runCatching { collections.get().ensureFavorites() }
+            runCatching {
+                collections.get().observeArtworkIds(CollectionRepository.FAVORITES_ID)
+                    .catch { }
+                    .collect { ids -> _saved.value = ids.toSet() }
             }
         }
-        viewModelScope.launch {
-            connectivity.isOnline.collect { _online.value = it }
+        viewModelScope.launch(AppDispatchers.io) {
+            runCatching {
+                connectivity.isOnline.collect { isOnline -> _online.value = isOnline }
+            }
         }
-        viewModelScope.launch {
-            runCatching { artworkRepository.seedIfNeeded() }
+        viewModelScope.launch(AppDispatchers.io) {
+            runCatching { artworkRepository.get().seedIfNeeded() }
         }
     }
 
@@ -108,29 +111,29 @@ class HomeViewModel @Inject constructor(
     }
 
     fun toggleSave(artwork: Artwork) {
-        viewModelScope.launch {
-            runCatching { collections.ensureFavorites() }
-            if (artwork.id in _saved.value) {
-                collections.remove(CollectionRepository.FAVORITES_ID, artwork.id)
-            } else {
-                collections.add(CollectionRepository.FAVORITES_ID, artwork.id)
+        viewModelScope.launch(AppDispatchers.io) {
+            runCatching {
+                val repository = collections.get()
+                repository.ensureFavorites()
+                if (artwork.id in _saved.value) {
+                    repository.remove(CollectionRepository.FAVORITES_ID, artwork.id)
+                } else {
+                    repository.add(CollectionRepository.FAVORITES_ID, artwork.id)
+                }
             }
         }
     }
 
     fun recordDailyView() {
         state.value.content?.daily?.let { artwork ->
-            viewModelScope.launch { runCatching { artworkRepository.recordView(artwork) } }
+            viewModelScope.launch(AppDispatchers.io) {
+                runCatching { artworkRepository.get().recordView(artwork) }
+            }
         }
-    }
-
-    fun recordTasteMute(key: String, muted: Boolean) {
-        viewModelScope.launch { tasteRepository.setMuted(key, muted) }
     }
 
     private data class HomeStateInput(
         val prefs: UserPreferences,
-        val profile: TasteProfile,
         val saved: Set<String>,
         val online: Boolean,
     )

@@ -205,8 +205,10 @@ Grab the latest signed APK from **[Releases](https://github.com/fleurdeur/the-Li
 
 | Package | Best for | Size |
 | :--- | :--- | ---: |
-| **Library of Arts Phone** | Phones and tablets, one universal APK | ~22 MB |
-| **Library of Arts Wear** | Wear OS 3.0+ companion | ~9 MB |
+| **Universal APK** | Any phone or tablet — choose this if unsure | ~22 MB |
+| **ARM64 APK** | Most modern phones and tablets (arm64-v8a) | ~16 MB |
+| **ARMv7 APK** | Older 32-bit phones and tablets (armeabi-v7a) | ~15 MB |
+| **Wear APK** | Wear OS 3.0+ companion | ~9 MB |
 
 **Requirements:** Android 8.0 (API 26) or newer, a device with 2 GB RAM or more, and roughly 150 MB free for the seed library and image cache. Optional features — camera scan, location, narration, AR wall preview — ask for permission only when opened.
 
