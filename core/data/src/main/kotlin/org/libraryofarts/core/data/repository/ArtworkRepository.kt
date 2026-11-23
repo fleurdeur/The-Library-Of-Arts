@@ -1,5 +1,6 @@
 package org.libraryofarts.core.data.repository
 
+import android.content.Context
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -18,6 +19,7 @@ import org.libraryofarts.core.model.Artwork
 import org.libraryofarts.core.model.ArtworkFilter
 import org.libraryofarts.core.model.TasteSignalKind
 import org.libraryofarts.core.network.MuseumNetwork
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -28,7 +30,9 @@ class ArtworkRepository @Inject constructor(
     private val network: MuseumNetwork,
     private val taste: TasteRepository,
     private val time: TimeProvider,
+    @ApplicationContext private val context: Context,
 ) {
+    private val refreshPrefs by lazy { context.getSharedPreferences("library_refresh", Context.MODE_PRIVATE) }
     val artworkCount: Flow<Int> = artworkDao.observeCount()
 
     suspend fun seedIfNeeded() {
@@ -76,7 +80,18 @@ class ArtworkRepository @Inject constructor(
         return result.artworks.size
     }
 
-    suspend fun refreshHighlights(): Int = refreshFromNetwork("")
+    suspend fun refreshHighlights(): Int {
+        val now = System.currentTimeMillis()
+        val last = refreshPrefs.getLong("highlights_at", 0L)
+        if (now - last < HIGHLIGHT_COOLDOWN_MILLIS && artworkDao.count() > 0) return 0
+        val count = refreshFromNetwork("")
+        if (count > 0) refreshPrefs.edit().putLong("highlights_at", now).apply()
+        return count
+    }
+
+    private companion object {
+        const val HIGHLIGHT_COOLDOWN_MILLIS = 30L * 60 * 1000
+    }
 
     suspend fun dailyArtwork(epochDay: Long): Artwork {
         val pool = artworkDao.random(12).mapNotNull { it.toArtwork() }

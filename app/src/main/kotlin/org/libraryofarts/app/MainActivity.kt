@@ -223,7 +223,10 @@ private fun LibraryApp(prefs: UserPreferences) {
                         onOpenArtist = { nav.navigate(Route.artist(it)) },
                     )
                 }
-                composable(Route.SETTINGS) { SettingsRoute() }
+                composable(
+                    Route.SETTINGS,
+                    deepLinks = listOf(navDeepLink { uriPattern = "libraryofarts://settings" }),
+                ) { SettingsRoute() }
                 composable(
                     Route.ARTWORK,
                     arguments = listOf(navArgument("id") { type = NavType.StringType }),

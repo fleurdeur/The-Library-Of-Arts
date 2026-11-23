@@ -2,6 +2,7 @@ package org.libraryofarts.feature.settings
 
 import android.content.Context
 import android.net.Uri
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,11 +14,19 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.libraryofarts.core.data.export.BackupRepository
 import org.libraryofarts.core.data.pack.PackCatalog
 import org.libraryofarts.core.data.repository.PackRepository
+import org.libraryofarts.core.data.update.AppUpdate
+import org.libraryofarts.core.data.update.UpdateAsset
+import org.libraryofarts.core.data.update.UpdateCheck
+import org.libraryofarts.core.data.update.UpdateDownloadProgress
+import org.libraryofarts.core.data.update.UpdateInstallResult
+import org.libraryofarts.core.data.update.UpdateRepository
+import org.libraryofarts.core.common.BuildInfo
 import org.libraryofarts.core.datastore.ImageQuality
 import org.libraryofarts.core.datastore.SettingsRepository
 import org.libraryofarts.core.datastore.ThemeMode
@@ -26,11 +35,22 @@ import org.libraryofarts.core.model.InstalledPack
 import org.libraryofarts.core.model.PackDownloadProgress
 import org.libraryofarts.core.model.PackManifest
 
+data class UpdateUiState(
+    val checking: Boolean = false,
+    val check: UpdateCheck? = null,
+    val download: UpdateDownloadProgress = UpdateDownloadProgress(),
+    val downloaded: File? = null,
+    val downloadedVersion: String? = null,
+    val permissionRequired: Boolean = false,
+    val currentVersion: String = BuildInfo.VERSION_NAME,
+)
+
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settings: SettingsRepository,
     private val packs: PackRepository,
     private val backup: BackupRepository,
+    private val updates: UpdateRepository,
     @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -51,15 +71,96 @@ class SettingsViewModel @Inject constructor(
     private val _message = MutableStateFlow<String?>(null)
     val message: StateFlow<String?> = _message
 
+    private val _update = MutableStateFlow(UpdateUiState())
+    val updateState: StateFlow<UpdateUiState> = _update
+
     val catalog: List<PackManifest> = PackCatalog.packs
     val availableBytes: Long get() = packs.availableBytes()
 
     init {
         refreshCacheSize()
+        updates.cleanUpIfInstalled()
+        checkForUpdates()
     }
 
     fun dismissMessage() {
         _message.value = null
+    }
+
+    fun checkForUpdates(force: Boolean = true) {
+        if (_update.value.checking || _update.value.download.state == UpdateDownloadProgress.State.DOWNLOADING) return
+        _update.update { it.copy(checking = true, permissionRequired = false) }
+        viewModelScope.launch {
+            val result = updates.check(BuildInfo.VERSION_NAME, force = force)
+            val ready = updates.readyDownload()
+            _update.update {
+                it.copy(
+                    checking = false,
+                    check = result,
+                    downloaded = ready,
+                    downloadedVersion = updates.readyVersion(),
+                    download = if (ready != null) {
+                        UpdateDownloadProgress(ready.length(), ready.length(), UpdateDownloadProgress.State.READY)
+                    } else {
+                        it.download
+                    },
+                )
+            }
+        }
+    }
+
+    fun downloadUpdate(asset: UpdateAsset) {
+        val version = _update.value.check?.latest?.versionName ?: return
+        if (_update.value.download.state == UpdateDownloadProgress.State.DOWNLOADING) return
+        viewModelScope.launch {
+            updates.download(asset) { progress ->
+                _update.update { it.copy(download = progress) }
+            }.onSuccess { file ->
+                updates.rememberReady(asset, version)
+                _update.update {
+                    it.copy(
+                        downloaded = file,
+                        downloadedVersion = version,
+                        download = UpdateDownloadProgress(file.length(), file.length(), UpdateDownloadProgress.State.READY),
+                    )
+                }
+                _message.value = "Downloaded ${asset.architecture.label}. Tap Install when you are ready."
+            }.onFailure { error ->
+                _message.value = error.message ?: "The update could not be downloaded."
+            }
+        }
+    }
+
+    fun installDownloaded() {
+        val state = _update.value
+        val file = state.downloaded ?: return
+        when (val result = updates.install(file, state.downloadedVersion ?: "")) {
+            is UpdateInstallResult.Started -> {
+                _update.update { it.copy(permissionRequired = false) }
+                _message.value = "Installer opened. Your library, packs and journal stay in place."
+            }
+            UpdateInstallResult.PermissionRequired -> {
+                _update.update { it.copy(permissionRequired = true) }
+            }
+            is UpdateInstallResult.Failed -> _message.value = result.message
+        }
+    }
+
+    fun installPermissionIntent(): Intent = updates.permissionIntent()
+
+    fun dismissInstallPermission() {
+        _update.update { it.copy(permissionRequired = false) }
+    }
+
+    fun clearDownloadedUpdate() {
+        updates.clearAllDownloads()
+        _update.update {
+            it.copy(
+                downloaded = null,
+                downloadedVersion = null,
+                download = UpdateDownloadProgress(),
+            )
+        }
     }
 
     fun refreshCacheSize() {

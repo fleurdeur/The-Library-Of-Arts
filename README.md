@@ -49,6 +49,7 @@
 - **Plain-language reasons** for every recommendation, with no hidden weights.
 - **Taste Profile screen** to see, adjust or reset everything the library has noticed.
 - **Licence, credit and provenance** shown on every artwork.
+- **In-app edition updates** — the library checks the public release feed, notifies you once per edition, and can download and install the matching APK without leaving the app.
 
     </td>
     <td width="50%" valign="top">
@@ -60,6 +61,7 @@
 - **Time Machine**, **Colour Search**, **Similar Art**, **Hidden Gems**, **Artist Connections** and **Museum Visit**.
 - **Offline floor guides** and museum audio stops.
 - **Seed library** installed with the app, so every screen works from first launch.
+- **Lazy, cached plates** — Coil loads only the images on screen, keeps a 256 MB disk cache and refreshes museum highlights at most once every 30 minutes.
 
     </td>
   </tr>
@@ -166,7 +168,7 @@ The interpretation feature belongs to you, not to a cloud service.
 
 </div>
 
-Three real packs are published on the **[packs-v1 release](https://github.com/fleurdeur/The-Library-Of-Arts/releases/tag/packs-v1)**. They contain the JSONL index, public-domain image files and checksums the installer verifies.
+Six real packs are published on the **[packs-v1 release](https://github.com/fleurdeur/The-Library-Of-Arts/releases/tag/packs-v1)**. They contain the JSONL index, public-domain image files and checksums the installer verifies.
 
 - **Resumable HTTP range downloads**, with progress and cancellation.
 - **Mandatory SHA-256 verification** before extraction.
@@ -176,7 +178,7 @@ Three real packs are published on the **[packs-v1 release](https://github.com/fl
 - **Room indexing** after install, and clean pack deletion.
 - **Delta metadata support** for future updates.
 - **Public release downloads** — no private CDN or account is required.
-- **Published now:** *Starter Salon* (23 works), *Impressionism & After* (6 works) and *Dutch Golden Age* (7 works). Install them from Settings → Offline packs; each archive is checksum-pinned in the app.
+- **Published now:** *Starter Salon* (23 works), *Impressionism & After* (6 works), *Dutch Golden Age* (7 works), *The Landscape Room* (8 works), *Portraits & Presences* (10 works) and *Rooms & Shadows* (7 works). Install them from Settings → Offline packs; each archive is checksum-pinned in the app, and an installed pack appears only once.
 
 The starter pack replaces the built-in seed records with local image copies, so the same plates work with the radio off. Pack deletion is clean and never removes journal entries or collections.
 
@@ -204,7 +206,7 @@ The starter pack replaces the built-in seed records with local image copies, so 
 
 <a href="https://github.com/fleurdeur/The-Library-Of-Arts/releases" target="_blank" rel="noopener noreferrer"><img src="https://cdn.jsdelivr.net/gh/JMcrafter26/badges@main/src/assets/supported/android/cozy.svg" alt="Download for Android" height="55"/></a>
 
-Grab the latest signed APK from **[Releases](https://github.com/fleurdeur/The-Library-Of-Arts/releases)**.
+Grab the latest signed APK from **[Releases](https://github.com/fleurdeur/The-Library-Of-Arts/releases)**, or open **Settings → Updates** inside the app to check, choose the edition for this device, download it and install it. The downloaded APK is removed after the new version is installed.
 
 | Package | Best for | Size |
 | :--- | :--- | ---: |
@@ -225,7 +227,7 @@ Grab the latest signed APK from **[Releases](https://github.com/fleurdeur/The-Li
 
 ```bash
 git clone https://github.com/fleurdeur/The-Library-Of-Arts.git
-cd the-Library-Of-Arts
+cd The-Library-Of-Arts
 
 # Debug APKs for phone and Wear
 ./gradlew assembleDebug

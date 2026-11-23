@@ -3,4 +3,5 @@
     <cache-path name="shared" path="shared/" />
     <files-path name="exports" path="exports/" />
     <cache-path name="images" path="." />
+    <cache-path name="updates" path="updates/" />
 </paths>

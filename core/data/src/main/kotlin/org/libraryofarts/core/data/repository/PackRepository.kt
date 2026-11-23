@@ -35,7 +35,7 @@ class PackRepository @Inject constructor(
     val progress: StateFlow<Map<String, PackDownloadProgress>> = _progress.asStateFlow()
 
     val installed: Flow<List<InstalledPack>> = packDao.observeInstalled().map { list ->
-        list.map { it.toModel() }
+        list.map { it.toModel() }.distinctBy { it.id }
     }
 
     val totalInstalledBytes: Flow<Long> = packDao.observeTotalBytes()

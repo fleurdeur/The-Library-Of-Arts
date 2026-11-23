@@ -14,5 +14,9 @@
     <string name="notification_channel_daily_description">One quiet artwork notification each day.</string>
     <string name="notification_title">A work for today</string>
     <string name="notification_action">Look closely</string>
+    <string name="notification_channel_updates">Library updates</string>
+    <string name="notification_channel_updates_description">A quiet note when a new edition of the library is published.</string>
+    <string name="update_notification_title">A new edition is ready — %1$s</string>
+    <string name="update_notification_body">Open Settings to review the release and download the APK that fits this device.</string>
     <string name="cast_app_id">CC1AD845</string>
 </resources>

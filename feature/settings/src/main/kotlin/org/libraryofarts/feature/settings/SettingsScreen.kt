@@ -2,7 +2,9 @@ package org.libraryofarts.feature.settings
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -42,6 +45,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -53,6 +58,9 @@ import org.libraryofarts.core.designsystem.component.GlassCard
 import org.libraryofarts.core.designsystem.component.LibraryPill
 import org.libraryofarts.core.designsystem.component.SectionHeader
 import org.libraryofarts.core.designsystem.component.SoftBackdrop
+import org.libraryofarts.core.data.update.UpdateAsset
+import org.libraryofarts.core.data.update.UpdateCheck
+import org.libraryofarts.core.data.update.UpdateDownloadProgress
 import org.libraryofarts.core.datastore.ImageQuality
 import org.libraryofarts.core.datastore.LanguageOption
 import org.libraryofarts.core.datastore.ThemeMode
@@ -61,6 +69,7 @@ import org.libraryofarts.core.model.InstalledPack
 import org.libraryofarts.core.model.PackDownloadProgress
 import org.libraryofarts.core.model.PackManifest
 import org.libraryofarts.core.ui.ScreenTitle
+import org.libraryofarts.core.designsystem.R as DsR
 
 private enum class BackupMode { EXPORT, RESTORE }
 
@@ -72,8 +81,17 @@ fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
     val cacheBytes by viewModel.cacheBytes.collectAsStateWithLifecycle()
     val progress by viewModel.progress.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
+    val update by viewModel.updateState.collectAsStateWithLifecycle()
 
     var backupMode by remember { mutableStateOf<BackupMode?>(null) }
+    var showArchitectures by remember { mutableStateOf(false) }
+    val installPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) {
+        // Returning from "unknown sources" should feel like one action, not two.
+        viewModel.installDownloaded()
+    }
+    val uriHandler = LocalUriHandler.current
     var pendingPassphrase by remember { mutableStateOf<CharArray?>(null) }
     var showPrivacy by remember { mutableStateOf(false) }
 
@@ -210,6 +228,17 @@ fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
                     SwitchRow("Search history", "Keep recent searches on this device", prefs.searchHistoryEnabled, viewModel::setSearchHistory)
                 }
             }
+            item("updates") {
+                SettingsSection("Updates") {
+                    UpdatePanel(
+                        state = update,
+                        onCheck = { viewModel.checkForUpdates(force = true) },
+                        onChoose = { showArchitectures = true },
+                        onInstall = viewModel::installDownloaded,
+                        onClear = viewModel::clearDownloadedUpdate,
+                    )
+                }
+            }
             item("packs-header") {
                 SectionHeader("Offline packs", subtitle = "Download once, look forever. ${formatBytes(installedBytes)} installed.")
             }
@@ -226,10 +255,13 @@ fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
                     InstalledPackCard(pack, onDelete = { viewModel.deletePack(pack) })
                 }
             }
-            items(viewModel.catalog, key = { "catalog-${it.id}" }) { manifest ->
+            items(
+                viewModel.catalog.filter { manifest -> installed.none { it.id == manifest.id } },
+                key = { "catalog-${it.id}" },
+            ) { manifest ->
                 CatalogPackCard(
                     manifest = manifest,
-                    installed = installed.any { it.id == manifest.id },
+                    installed = false,
                     progress = progress[manifest.id],
                     freeBytes = viewModel.availableBytes,
                     onInstall = { viewModel.downloadPack(manifest) },
@@ -289,15 +321,74 @@ fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
             }
             item("about") {
                 SettingsSection("About") {
-                    Text(BuildInfo.APP_NAME, style = MaterialTheme.typography.titleMedium)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Image(
+                            painter = painterResource(DsR.drawable.ic_library_mark),
+                            contentDescription = "The Great Library of Arts icon",
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(RoundedCornerShape(2.dp)),
+                        )
+                        Spacer(Modifier.width(14.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                BuildInfo.APP_NAME,
+                                style = MaterialTheme.typography.titleLarge,
+                            )
+                            Text(
+                                "A quiet, offline-first museum for public-domain art.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
                     Text(
-                        "A non-commercial public-domain art library. Artwork metadata belongs to the holding museums; images retain the licence stated on each record.",
+                        "Look closely, keep what matters, and learn from your own eye. No account, no ads and no tracking.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "DEVELOPER",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(1.dp))
+                            .clickable { uriHandler.openUri(BuildInfo.GITHUB_PROFILE) }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text("fleurdeur", style = MaterialTheme.typography.titleMedium)
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "github.com/fleurdeur →",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                     Spacer(Modifier.height(8.dp))
-                    Text("Version 1.0.3 · GPLv3 · Made for slow looking", style = MaterialTheme.typography.labelSmall)
-                    Text("Privacy questions: ${BuildInfo.PRIVACY_EMAIL}", style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        "Version ${BuildInfo.VERSION_NAME} · GPLv3 · Made for slow looking",
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                    Text(
+                        "Source, licences and releases: ${BuildInfo.REPOSITORY}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Text(
+                        "Privacy questions: ${BuildInfo.PRIVACY_EMAIL}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         }
@@ -322,6 +413,39 @@ fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
 
     if (showPrivacy) {
         PrivacyDialog(prefs = prefs, installedCount = installed.size, onDismiss = { showPrivacy = false })
+    }
+
+    if (showArchitectures && update.check?.latest != null) {
+        ArchitectureDialog(
+            check = update.check!!,
+            onSelect = { asset ->
+                showArchitectures = false
+                viewModel.downloadUpdate(asset)
+            },
+            onDismiss = { showArchitectures = false },
+        )
+    }
+
+    if (update.permissionRequired) {
+        AlertDialog(
+            onDismissRequest = viewModel::dismissInstallPermission,
+            title = { Text("Allow this install") },
+            text = {
+                Text(
+                    "Android needs permission to install an update from the library. Open the system setting, allow installs from this app, then return here.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.dismissInstallPermission()
+                        runCatching { installPermissionLauncher.launch(viewModel.installPermissionIntent()) }
+                    },
+                ) { Text("Open settings") }
+            },
+            dismissButton = { TextButton(onClick = viewModel::dismissInstallPermission) { Text("Not now") } },
+        )
     }
 
     message?.let { text ->
@@ -499,6 +623,174 @@ private fun CatalogPackCard(
             }
         }
     }
+}
+
+@Composable
+private fun UpdatePanel(
+    state: UpdateUiState,
+    onCheck: () -> Unit,
+    onChoose: () -> Unit,
+    onInstall: () -> Unit,
+    onClear: () -> Unit,
+) {
+    val check: UpdateCheck? = state.check
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text("Version ${state.currentVersion}", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Checks the public release feed every 12 hours and notifies you once per edition.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Spacer(Modifier.width(8.dp))
+        TextButton(onClick = onCheck, enabled = !state.checking) {
+            Text(if (state.checking) "Checking…" else "Check now")
+        }
+    }
+    Spacer(Modifier.height(8.dp))
+
+    if (state.checking && check == null) {
+        Text("Asking GitHub for the latest edition…", style = MaterialTheme.typography.bodySmall)
+        return
+    }
+
+    val latest = check?.latest
+    if (check?.available == true && latest != null) {
+        Text(
+            "A new edition is ready · ${latest.versionName}",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        if (latest.notes.isNotBlank()) {
+            Spacer(Modifier.height(4.dp))
+            Text(
+                latest.notes.lineSequence().filter { it.isNotBlank() }.take(5).joinToString("\n"),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 6,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Spacer(Modifier.height(10.dp))
+        if (state.downloaded == null) {
+            ArtButton("Choose download", onClick = onChoose, icon = Icons.Default.Download)
+        }
+    } else if (check != null) {
+        Text(
+            "You are on the newest edition. The library will look again on its own.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    } else {
+        Text(
+            "The release feed has not been read yet.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+
+    val checkError = check?.error
+    if (checkError != null) {
+        Spacer(Modifier.height(6.dp))
+        Text(
+            checkError,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.error,
+        )
+    }
+
+    val progress = state.download
+    if (progress.state == UpdateDownloadProgress.State.DOWNLOADING ||
+        progress.state == UpdateDownloadProgress.State.VERIFYING
+    ) {
+        Spacer(Modifier.height(10.dp))
+        LinearProgressIndicator(
+            progress = { progress.fraction },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(4.dp)
+                .clip(RoundedCornerShape(2.dp)),
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            when (progress.state) {
+                UpdateDownloadProgress.State.VERIFYING -> "Checking the checksum…"
+                else -> "Downloading · ${(progress.fraction * 100).toInt()}% of ${formatBytes(progress.total)}"
+            },
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+        )
+    }
+
+    if (state.downloaded != null) {
+        Spacer(Modifier.height(10.dp))
+        Text(
+            "Downloaded ${state.downloadedVersion ?: "update"} · the APK is deleted after installation.",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(6.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            ArtButton("Install update", onClick = onInstall)
+            Spacer(Modifier.width(12.dp))
+            TextButton(onClick = onClear) { Text("Delete download") }
+        }
+    }
+}
+
+@Composable
+private fun ArchitectureDialog(
+    check: UpdateCheck,
+    onSelect: (UpdateAsset) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val update = check.latest
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Choose this device's edition") },
+        text = {
+            Column {
+                Text(
+                    "Version ${update?.versionName.orEmpty()} is published as separate APKs. Pick the one that fits this device.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                update?.assets?.forEach { asset ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(1.dp))
+                            .clickable { onSelect(asset) }
+                            .padding(vertical = 10.dp),
+                    ) {
+                        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            Text(asset.architecture.label, style = MaterialTheme.typography.titleSmall)
+                            Spacer(Modifier.weight(1f))
+                            Text(asset.sizeLabel, style = MaterialTheme.typography.labelSmall)
+                        }
+                        Text(
+                            asset.architecture.note,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
+                if (update?.assets.isNullOrEmpty()) {
+                    Text(
+                        "This release has no APK attached yet. Try again after the publisher finishes uploading.",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }
 
 @Composable

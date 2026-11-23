@@ -25,6 +25,11 @@ data class FeatureFlags(
 object BuildInfo {
     const val APP_NAME = "The Great Library of Arts"
     const val PACKAGE_NAME = "org.libraryofarts.app"
+    const val VERSION_NAME = "1.0.4"
+    const val VERSION_CODE = 5
+    const val DEVELOPER = "fleurdeur"
+    const val GITHUB_PROFILE = "https://github.com/fleurdeur"
+    const val REPOSITORY = "https://github.com/fleurdeur/The-Library-Of-Arts"
     const val PRIVACY_EMAIL = "privacy@libraryofarts.org"
     const val DEFAULT_CDN_BASE = "https://cdn.libraryofarts.org/packs/"
     const val DEFAULT_LLM_MODEL_FILE = "gemma-3n-E2B-it-int4.task"

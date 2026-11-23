@@ -11,6 +11,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -208,6 +210,7 @@ fun ArtworkRoute(
 
 private fun interpretationText(state: ArtworkUiState): String = state.interpretation
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ArtworkScreen(
     artwork: Artwork,
@@ -298,13 +301,14 @@ private fun ArtworkScreen(
             }
         }
         item("actions") {
-            Row(
+            FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                ActionChip(if (state.brushstroke) "Brushstroke ON" else "Brushstroke", Icons.Default.Brush, onToggleBrushstroke)
+                ActionChip(if (state.brushstroke) "Brushstroke on" else "Brushstroke", Icons.Default.Brush, onToggleBrushstroke)
                 ActionChip(if (state.comparison == null) "Your eyes first" else "Your reading", Icons.Default.Edit, onJournal)
                 ActionChip("Slow look", Icons.Default.Headphones, onSlowLooking)
                 if (artwork.annotations.isNotEmpty()) ActionChip("Details", Icons.Default.Brush, onToggleAnnotations)
@@ -437,7 +441,10 @@ private fun ArtworkScreen(
         item("tools") {
             Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
                 SectionHeader("In your space", subtitle = "Bring the scale of the work into the room")
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     ActionChip("Frame preview", Icons.Default.Brush, onFrame)
                     ActionChip("Scale check", Icons.Default.Brush, onScale)
                     ActionChip("See on my wall", Icons.Default.Brush, onAr)
@@ -551,12 +558,12 @@ private fun ActionChip(
             .clip(RoundedCornerShape(1.dp))
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(1.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 9.dp),
+            .padding(horizontal = 13.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(15.dp))
-        Spacer(Modifier.width(5.dp))
-        Text(label, style = MaterialTheme.typography.labelSmall)
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(17.dp))
+        Spacer(Modifier.width(7.dp))
+        Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 1)
     }
 }
 

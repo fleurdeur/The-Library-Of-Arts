@@ -29,8 +29,8 @@ android {
         applicationId = "org.libraryofarts.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 4
-        versionName = "1.0.3"
+        versionCode = 5
+        versionName = "1.0.4"
         resourceConfigurations += listOf("en", "fr", "de", "es", "it", "pt", "ar", "he", "ja", "ko", "zh")
     }
 
@@ -75,6 +75,8 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:ui"))
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
     implementation(project(":core:data"))
     implementation(project(":core:database"))
     implementation(project(":core:datastore"))
