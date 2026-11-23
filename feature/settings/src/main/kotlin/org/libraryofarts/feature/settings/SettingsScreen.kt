@@ -296,7 +296,7 @@ fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(8.dp))
-                    Text("Version 1.0.2 · GPLv3 · Made for slow looking", style = MaterialTheme.typography.labelSmall)
+                    Text("Version 1.0.3 · GPLv3 · Made for slow looking", style = MaterialTheme.typography.labelSmall)
                     Text("Privacy questions: ${BuildInfo.PRIVACY_EMAIL}", style = MaterialTheme.typography.labelSmall)
                 }
             }

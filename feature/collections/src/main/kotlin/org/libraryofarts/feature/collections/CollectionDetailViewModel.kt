@@ -30,7 +30,9 @@ class CollectionDetailViewModel @Inject constructor(
     private val repository: CollectionRepository,
     private val artworkRepository: ArtworkRepository,
 ) : ViewModel() {
-    val collectionId: String = savedStateHandle["collectionId"] ?: CollectionRepository.FAVORITES_ID
+    val collectionId: String = savedStateHandle.get<String>("collectionId")
+        ?: savedStateHandle.get<String>("id")
+        ?: CollectionRepository.FAVORITES_ID
     private val busy = MutableStateFlow(false)
     private val _share = MutableSharedFlow<ShareRequest>()
     val share: SharedFlow<ShareRequest> = _share

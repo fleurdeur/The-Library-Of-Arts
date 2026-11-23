@@ -56,7 +56,12 @@ class ArtworkViewModel @Inject constructor(
     private val narrator: Narrator,
     private val shareRenderer: ShareCardRenderer,
 ) : ViewModel() {
-    val artworkId: String = savedStateHandle["artworkId"] ?: ""
+    // The navigation graph declares this argument as `id`; older builds read
+    // `artworkId`, which is always absent when the screen is opened from Home,
+    // Explore or a deep link. Accept both so an existing route keeps working.
+    val artworkId: String = savedStateHandle.get<String>("artworkId")
+        ?: savedStateHandle.get<String>("id")
+        ?: ""
     private val _state = MutableStateFlow(ArtworkUiState())
     val state: StateFlow<ArtworkUiState> = _state.asStateFlow()
     private var sessionStarted = System.currentTimeMillis()

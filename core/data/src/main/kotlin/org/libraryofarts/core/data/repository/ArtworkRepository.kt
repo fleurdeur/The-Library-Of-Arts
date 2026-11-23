@@ -155,6 +155,13 @@ class ArtworkRepository @Inject constructor(
     }
 
     suspend fun recordView(artwork: Artwork, dwellMillis: Long = 0, zoomed: Boolean = false) {
+        // Opening a work is an explicit request to keep it. Make sure the
+        // normalized record is in the library before recording progress, so a
+        // work reached from a deep link, widget or an older cached route is
+        // never shown as "not in the library yet" after it has been viewed.
+        if (artworkDao.getById(artwork.id) == null) {
+            artworkDao.upsert(artwork.toEntity())
+        }
         artworkDao.incrementView(artwork.id)
         val now = time.nowMillis()
         val existing = progressDao.forArtwork(artwork.id)
