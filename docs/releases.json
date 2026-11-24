@@ -1,28 +1,28 @@
 {
   "latest": {
-    "tag": "v1.0.5",
-    "version": "1.0.5",
-    "name": "The Great Library of Arts 1.0.5",
-    "notes": "Pull-to-refresh only on Home, a redrawn Natural Earth museum atlas, progressive technical study lenses, faster painting loading, a three-endpoint release feed, dynamic infinite looking games with artwork plates and detail hunts, and unified controls. Full notes: https://github.com/fleurdeur/The-Library-Of-Arts/releases/tag/v1.0.5",
-    "published_at": "2026-11-24T22:10:00Z",
+    "tag": "v1.0.6",
+    "version": "1.0.6",
+    "name": "The Great Library of Arts 1.0.6",
+    "notes": "A calmer, faster edition: home never auto-refreshes (24h policy), plates cache hard for offline viewing, the atlas zooms, the technical lens colours the main plate, share cards render complete even offline, and Kids Mode text is fixed. Full notes: https://github.com/fleurdeur/The-Library-Of-Arts/releases/tag/v1.0.6",
+    "published_at": "2026-11-25T06:40:00Z",
     "assets": [
       {
-        "name": "TheGreatLibraryOfArts-1.0.5-universal.apk",
-        "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.0.5/TheGreatLibraryOfArts-1.0.5-universal.apk",
+        "name": "TheGreatLibraryOfArts-1.0.6-universal.apk",
+        "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.0.6/TheGreatLibraryOfArts-1.0.6-universal.apk",
         "size": 22853039,
-        "sha256": "482d262667cff3b87ee876d8b8d47c967f86890b5dbb76ca3ec79536a16d0910"
+        "sha256": "595a2010f4390e1567951b30e8aeb1ef52eb3f364a9850d3cd34da2b7a013763"
       },
       {
-        "name": "TheGreatLibraryOfArts-1.0.5-arm64-v8a.apk",
-        "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.0.5/TheGreatLibraryOfArts-1.0.5-arm64-v8a.apk",
+        "name": "TheGreatLibraryOfArts-1.0.6-arm64-v8a.apk",
+        "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.0.6/TheGreatLibraryOfArts-1.0.6-arm64-v8a.apk",
         "size": 16445176,
-        "sha256": "d241b574648435f0d46c51c618582a473d77f5d2750d430195c17b9d24b82e48"
+        "sha256": "ecf06f95a7df82a0d1cb362976f6dd4bb19e3432e940874583164d56dcdfb1ab"
       },
       {
-        "name": "TheGreatLibraryOfArts-1.0.5-armeabi-v7a.apk",
-        "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.0.5/TheGreatLibraryOfArts-1.0.5-armeabi-v7a.apk",
+        "name": "TheGreatLibraryOfArts-1.0.6-armeabi-v7a.apk",
+        "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.0.6/TheGreatLibraryOfArts-1.0.6-armeabi-v7a.apk",
         "size": 15329642,
-        "sha256": "61af3fa19707c1c83ab46e4e8e6c5216aa7fd36d570ba6b7984f6571ae4df224"
+        "sha256": "12ca7574cbf901dc1cb61fd61341b3b6dd9f337f3fee8ce87e7f5bff53ece149"
       }
     ]
   }
