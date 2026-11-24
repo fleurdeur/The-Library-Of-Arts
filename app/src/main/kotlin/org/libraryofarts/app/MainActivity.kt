@@ -207,8 +207,8 @@ private fun LibraryApp(prefs: UserPreferences) {
                 navController = nav,
                 startDestination = Route.HOME,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .widthIn(max = 920.dp),
+                    .widthIn(max = 920.dp)
+                    .fillMaxSize(),
             ) {
                 composable(
                     Route.HOME,

@@ -10,19 +10,19 @@
         "name": "TheGreatLibraryOfArts-1.0.5-universal.apk",
         "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.0.5/TheGreatLibraryOfArts-1.0.5-universal.apk",
         "size": 22853039,
-        "sha256": "8c458e1ca0ddb8600c8e63716414775af79f4655eb3cc3d48f6b1a5fa9ca3050"
+        "sha256": "482d262667cff3b87ee876d8b8d47c967f86890b5dbb76ca3ec79536a16d0910"
       },
       {
         "name": "TheGreatLibraryOfArts-1.0.5-arm64-v8a.apk",
         "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.0.5/TheGreatLibraryOfArts-1.0.5-arm64-v8a.apk",
         "size": 16445176,
-        "sha256": "343204da66ae875c47d51ef1f360feec2e6767ef4f07b3ed8a7dbe323a672e4a"
+        "sha256": "d241b574648435f0d46c51c618582a473d77f5d2750d430195c17b9d24b82e48"
       },
       {
         "name": "TheGreatLibraryOfArts-1.0.5-armeabi-v7a.apk",
         "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.0.5/TheGreatLibraryOfArts-1.0.5-armeabi-v7a.apk",
         "size": 15329642,
-        "sha256": "a1a66664af31d0b96e838af3f8c4097739c98d41b08abcdda6e5acaa1dfa6cd0"
+        "sha256": "61af3fa19707c1c83ab46e4e8e6c5216aa7fd36d570ba6b7984f6571ae4df224"
       }
     ]
   }
