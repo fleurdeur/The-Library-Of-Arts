@@ -22,12 +22,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import org.libraryofarts.core.model.Artwork
@@ -44,6 +50,7 @@ fun ArtworkViewer(
     modifier: Modifier = Modifier,
     brushstroke: Boolean = false,
     showAnnotations: Boolean = false,
+    lens: org.libraryofarts.core.model.StudyLens = org.libraryofarts.core.model.StudyLens.NONE,
     onZoom: () -> Unit = {},
 ) {
     val context = LocalContext.current
@@ -124,6 +131,7 @@ fun ArtworkViewer(
                     .build(),
                 contentDescription = description,
                 contentScale = ContentScale.Fit,
+                colorFilter = lensColorFilter(lens),
                 modifier = Modifier.fillMaxSize(),
             )
             if (showDetail || brushstroke) {
@@ -135,6 +143,7 @@ fun ArtworkViewer(
                         .build(),
                     contentDescription = description,
                     contentScale = ContentScale.Fit,
+                    colorFilter = lensColorFilter(lens),
                     onSuccess = { fullLoaded = true },
                     modifier = Modifier
                         .fillMaxSize()
@@ -175,6 +184,44 @@ fun ArtworkViewer(
             )
         }
     }
+}
+
+/** Interpretive colour matrix over the plate; NONE returns null. */
+private fun lensColorFilter(lens: org.libraryofarts.core.model.StudyLens): ColorFilter? {
+    val matrix = when (lens) {
+        org.libraryofarts.core.model.StudyLens.NONE -> return null
+        org.libraryofarts.core.model.StudyLens.INFRARED -> floatArrayOf(
+            0.15f, 1.45f, 0.05f, 0f, 8f,
+            0.05f, 0.45f, 0.70f, 0f, 0f,
+            0.40f, 0.05f, 1.15f, 0f, 0f,
+            0f, 0f, 0f, 1f, 0f,
+        )
+        org.libraryofarts.core.model.StudyLens.X_RAY -> floatArrayOf(
+            -0.70f, -0.70f, -0.70f, 0f, 245f,
+            -0.70f, -0.70f, -0.70f, 0f, 245f,
+            -0.70f, -0.70f, -0.70f, 0f, 255f,
+            0f, 0f, 0f, 1f, 0f,
+        )
+        org.libraryofarts.core.model.StudyLens.UNDERDRAWING -> floatArrayOf(
+            -0.45f, -0.45f, -0.45f, 0f, 228f,
+            -0.35f, -0.35f, -0.35f, 0f, 226f,
+            0.80f, 0.80f, 0.80f, 0f, 24f,
+            0f, 0f, 0f, 1f, 0f,
+        )
+        org.libraryofarts.core.model.StudyLens.BEFORE -> floatArrayOf(
+            0.82f, 0.46f, 0.22f, 0f, 12f,
+            0.44f, 0.72f, 0.22f, 0f, 10f,
+            0.32f, 0.40f, 0.48f, 0f, 18f,
+            0f, 0f, 0f, 1f, 0f,
+        )
+        org.libraryofarts.core.model.StudyLens.AFTER -> floatArrayOf(
+            1.22f, -0.08f, -0.05f, 0f, -8f,
+            -0.06f, 1.24f, -0.05f, 0f, -8f,
+            -0.05f, -0.08f, 1.28f, 0f, -8f,
+            0f, 0f, 0f, 1f, 0f,
+        )
+    }
+    return ColorFilter.colorMatrix(androidx.compose.ui.graphics.ColorMatrix(matrix))
 }
 
 @Composable

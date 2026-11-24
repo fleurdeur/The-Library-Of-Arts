@@ -8,6 +8,8 @@ import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.disk.DiskCache
 import coil3.memory.MemoryCache
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import coil3.request.allowHardware
 import coil3.request.crossfade
 import dagger.hilt.android.HiltAndroidApp
 import okio.Path.Companion.toPath
@@ -40,16 +42,39 @@ class LibraryApplication : Application(), Configuration.Provider, SingletonImage
     override fun newImageLoader(context: PlatformContext): ImageLoader = ImageLoader.Builder(context)
         .memoryCache {
             MemoryCache.Builder()
-                .maxSizePercent(context, 0.18)
+                .maxSizePercent(context, 0.25)
                 .build()
         }
         .diskCache {
             DiskCache.Builder()
                 .directory(cacheDir.resolve("image_cache").absolutePath.toPath())
-                .maxSizeBytes(256L * 1024 * 1024)
+                .maxSizeBytes(512L * 1024 * 1024)
                 .build()
         }
-        .crossfade(120)
+        .components {
+            add(
+                OkHttpNetworkFetcherFactory(
+                    callFactory = { coilOkHttp() },
+                ),
+            )
+        }
+        .allowHardware(true)
+        .crossfade(90)
+        .build()
+
+    /** A dedicated client whose cache directory matches Coil's disk cache. */
+    private fun coilOkHttp(): okhttp3.OkHttpClient = okhttp3.OkHttpClient.Builder()
+        .cache(okhttp3.Cache(cacheDir.resolve("image_cache_okhttp"), 256L * 1024 * 1024))
+        .connectTimeout(java.util.concurrent.TimeUnit.SECONDS.toMillis(10), java.util.concurrent.TimeUnit.MILLISECONDS)
+        .readTimeout(java.util.concurrent.TimeUnit.SECONDS.toMillis(20), java.util.concurrent.TimeUnit.MILLISECONDS)
+        .retryOnConnectionFailure(true)
+        .addInterceptor { chain ->
+            chain.proceed(
+                chain.request().newBuilder()
+                    .header("User-Agent", "TheGreatLibraryOfArts/1.0 (open-access art companion)")
+                    .build(),
+            )
+        }
         .build()
 
     override val workManagerConfiguration: Configuration

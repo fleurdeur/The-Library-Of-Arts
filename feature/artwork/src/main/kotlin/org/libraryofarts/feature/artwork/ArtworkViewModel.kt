@@ -43,6 +43,7 @@ data class ArtworkUiState(
     val audioPlaying: Boolean = false,
     val brushstroke: Boolean = false,
     val journalSaved: Boolean = false,
+    val lens: org.libraryofarts.core.model.StudyLens = org.libraryofarts.core.model.StudyLens.NONE,
 )
 
 @HiltViewModel
@@ -176,6 +177,10 @@ class ArtworkViewModel @Inject constructor(
 
     fun selectLayer(layer: ArtworkLayer?) {
         _state.value = _state.value.copy(activeLayer = layer)
+    }
+
+    fun selectLens(lens: org.libraryofarts.core.model.StudyLens) {
+        _state.value = _state.value.copy(lens = lens)
     }
 
     fun play(track: AudioTrack) {

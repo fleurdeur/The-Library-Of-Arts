@@ -22,6 +22,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.libraryofarts.core.model.Artwork
+import org.libraryofarts.core.model.ArtworkImage
 
 enum class ShareLayout(val label: String) {
     MUSEUM_LABEL("Museum label"),
@@ -61,7 +62,7 @@ class ShareCardRenderer @Inject constructor(
     ): Bitmap = withContext(Dispatchers.IO) {
         val bitmap = Bitmap.createBitmap(ratio.width, ratio.height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        val image = loadBitmap(artwork.image.fullUrl.ifBlank { artwork.image.thumbnailUrl })
+        val image = loadArtworkBitmap(artwork.image)
         drawBackground(canvas, bitmap, artwork, image)
         image?.recycle()
 
@@ -121,43 +122,64 @@ class ShareCardRenderer @Inject constructor(
 
     private fun drawMuseumLabel(canvas: Canvas, bitmap: Bitmap, artwork: Artwork, words: String, font: ShareFont, showCredit: Boolean) {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-        val labelLeft = bitmap.width * 0.08f
-        val labelTop = bitmap.height * 0.56f
-        val labelRight = bitmap.width * 0.92f
-        val labelBottom = bitmap.height * 0.92f
-        paint.color = Color.argb(232, 247, 242, 233)
-        canvas.drawRoundRect(RectF(labelLeft, labelTop, labelRight, labelBottom), 36f, 36f, paint)
+        val labelLeft = bitmap.width * 0.06f
+        val labelTop = bitmap.height * 0.47f
+        val labelRight = bitmap.width * 0.94f
+        val labelBottom = bitmap.height * 0.95f
+        paint.color = Color.argb(238, 247, 242, 233)
+        canvas.drawRoundRect(RectF(labelLeft, labelTop, labelRight, labelBottom), 30f, 30f, paint)
+        // Vermilion catalogue rule at the top of the label.
+        paint.color = Color.rgb(166, 60, 38)
+        canvas.drawRect(labelLeft, labelTop, labelLeft + 120f, labelTop + 12f, paint)
 
-        var y = labelTop + 100f
+        var y = labelTop + 78f
+        val textLeft = labelLeft + 46f
+        val textWidth = labelRight - textLeft - 46f
+
         paint.color = Color.rgb(120, 110, 96)
         paint.typeface = Typeface.create("sans-serif", Typeface.BOLD)
-        paint.textSize = 24f
+        paint.textSize = 22f
         paint.letterSpacing = 0.18f
-        canvas.drawText(artwork.museum.shortName.uppercase(), labelLeft + 56, y, paint)
-        y += 82
+        canvas.drawText(artwork.museum.shortName.uppercase(), textLeft, y, paint)
+        y += 66
 
         paint.color = Color.rgb(26, 23, 20)
         paint.typeface = font.typeface
-        paint.textSize = 54f
+        paint.textSize = 50f
         paint.letterSpacing = 0f
-        drawWrapped(canvas, artwork.title, labelLeft + 56, y, labelRight - labelLeft - 112, paint, 62f, 2)
-        y += 135
-        paint.textSize = 30f
+        drawWrapped(canvas, artwork.title, textLeft, y, textWidth, paint, 58f, 2)
+        val titleLines = wrappedLineCount(artwork.title, textWidth, paint).coerceIn(1, 2)
+        y += titleLines * 58f + 18f
+
+        paint.textSize = 28f
+        paint.typeface = Typeface.create("sans-serif", Typeface.NORMAL)
         paint.color = Color.rgb(90, 83, 74)
-        canvas.drawText("${artwork.displayArtist} · ${artwork.year}", labelLeft + 56, y, paint)
-        y += 70
+        drawWrapped(canvas, "${artwork.displayArtist} · ${artwork.year.ifBlank { "date unrecorded" }}", textLeft, y, textWidth, paint, 34f, 1)
+        y += 44f
+
+        paint.textSize = 22f
+        paint.color = Color.rgb(104, 96, 86)
+        val facts = listOfNotNull(
+            artwork.displayPeriod?.let { it },
+            artwork.medium?.let { it },
+            artwork.museum.city.takeIf { it.isNotBlank() }?.let { city -> "${artwork.museum.name}, $city" },
+        ).joinToString("  ·  ")
+        if (facts.isNotBlank()) {
+            drawWrapped(canvas, facts, textLeft, y, textWidth, paint, 30f, 3)
+            y += wrappedLineCount(facts, textWidth, paint).coerceIn(1, 3) * 30f + 14f
+        }
 
         if (words.isNotBlank()) {
             paint.typeface = Typeface.create("sans-serif", Typeface.ITALIC)
-            paint.textSize = 27f
+            paint.textSize = 26f
             paint.color = Color.rgb(40, 36, 31)
-            drawWrapped(canvas, "“$words”", labelLeft + 56, y + 10, labelRight - labelLeft - 112, paint, 36f, 4)
+            drawWrapped(canvas, "“$words”", textLeft, y, textWidth, paint, 34f, 4)
         }
         if (showCredit) {
             paint.typeface = Typeface.create("sans-serif", Typeface.NORMAL)
-            paint.textSize = 18f
+            paint.textSize = 17f
             paint.color = Color.rgb(138, 128, 114)
-            canvas.drawText(artwork.license.shortLabel, labelLeft + 56, labelBottom - 42, paint)
+            drawWrapped(canvas, "${artwork.license.shortLabel} · ${artwork.license.creditLine.ifBlank { artwork.creditLine }}", textLeft, labelBottom - 40f, textWidth, paint, 22f, 2)
         }
     }
 
@@ -195,7 +217,12 @@ class ShareCardRenderer @Inject constructor(
         paint.color = Color.argb(190, 255, 255, 255)
         paint.textAlign = Paint.Align.LEFT
         if (showCredit) {
-            drawWrapped(canvas, artwork.creditLine, bitmap.width * 0.1f, bitmap.height * 0.93f, bitmap.width * 0.8f, paint, 26f, 2)
+            val facts = listOfNotNull(
+                artwork.displayPeriod,
+                artwork.museum.run { "$name, $city".takeIf { it.isNotBlank() && !city.isBlank() } ?: name.takeIf { it.isNotBlank() } },
+            ).joinToString("  ·  ")
+            drawWrapped(canvas, facts, bitmap.width * 0.1f, bitmap.height * 0.86f, bitmap.width * 0.8f, paint, 26f, 2)
+            drawWrapped(canvas, "${artwork.license.shortLabel} · ${artwork.license.creditLine.ifBlank { artwork.creditLine }}", bitmap.width * 0.1f, bitmap.height * 0.93f, bitmap.width * 0.8f, paint, 26f, 2)
         }
     }
 
@@ -219,30 +246,87 @@ class ShareCardRenderer @Inject constructor(
         paint.color = Color.argb(220, 255, 255, 255)
         canvas.drawText("${artwork.displayArtist} · ${artwork.year}", bitmap.width * 0.08f, bitmap.height * 0.42f, paint)
 
+        paint.textSize = 24f
+        paint.color = Color.argb(215, 255, 255, 255)
+        val facts = listOfNotNull(
+            artwork.displayPeriod,
+            artwork.medium,
+            artwork.museum.run { if (city.isNotBlank()) "$name, $city" else name },
+        ).joinToString("  ·  ")
+        drawWrapped(canvas, facts, bitmap.width * 0.08f, bitmap.height * 0.50f, bitmap.width * 0.84f, paint, 32f, 3)
+
         if (words.isNotBlank()) {
             paint.color = Color.WHITE
             paint.typeface = font.typeface
             paint.textSize = 32f
-            drawWrapped(canvas, "“$words”", bitmap.width * 0.08f, bitmap.height * 0.55f, bitmap.width * 0.7f, paint, 42f, 5)
+            drawWrapped(canvas, "“$words”", bitmap.width * 0.08f, bitmap.height * 0.58f, bitmap.width * 0.7f, paint, 42f, 5)
         }
         if (showCredit) {
             paint.typeface = Typeface.create("sans-serif", Typeface.NORMAL)
             paint.textSize = 18f
             paint.color = Color.argb(180, 255, 255, 255)
-            drawWrapped(canvas, artwork.license.shortLabel, bitmap.width * 0.08f, bitmap.height * 0.93f, bitmap.width * 0.8f, paint, 24f, 1)
+            drawWrapped(canvas, "${artwork.license.shortLabel} · ${artwork.license.creditLine.ifBlank { artwork.creditLine }}", bitmap.width * 0.08f, bitmap.height * 0.93f, bitmap.width * 0.84f, paint, 24f, 2)
         }
     }
 
-    private fun loadBitmap(url: String): Bitmap? {
+    /**
+     * Resolves the plate in order: a pack-local file, a copy already stored in
+     * the app's Coil disk cache, then the network. The card therefore renders
+     * even when the device is offline.
+     */
+    private fun loadArtworkBitmap(image: ArtworkImage): Bitmap? {
+        image.localPath?.let { path ->
+            runCatching {
+                val opts = BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.ARGB_8888 }
+                BitmapFactory.decodeFile(path, opts)
+            }.getOrNull()?.let { return it }
+        }
+        image.thumbnailUrl.takeIf { it.isNotBlank() }?.let { url ->
+            cachedBitmap(url)?.let { return it }
+        }
+        image.fullUrl.takeIf { it.isNotBlank() }?.let { url ->
+            cachedBitmap(url)?.let { return it }
+            return networkBitmap(url) ?: networkBitmap(image.thumbnailUrl)
+        }
+        return null
+    }
+
+    /** Looks for a file Coil already downloaded into its 512 MB disk cache. */
+    private fun cachedBitmap(url: String): Bitmap? = runCatching {
+        val cacheDir = File(context.cacheDir, "image_cache")
+        val key = url.hashCode().toString(16)
+        val folder = File(cacheDir, key.take(2))
+        folder.listFiles()?.firstOrNull()?.let { entry ->
+            BitmapFactory.decodeFile(entry.absolutePath)
+        }
+    }.getOrNull()
+
+    private fun networkBitmap(url: String): Bitmap? {
         if (url.isBlank()) return null
         return runCatching {
             val request = Request.Builder().url(url).build()
             okHttp.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) return null
-                val bytes = response.body?.bytes() ?: return null
+                if (!response.isSuccessful) return@runCatching null
+                val bytes = response.body?.bytes() ?: return@runCatching null
                 BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
             }
         }.getOrNull()
+    }
+
+    private fun wrappedLineCount(text: String, maxWidth: Float, paint: Paint): Int {
+        val words = text.split(Regex("\\s+"))
+        var line = ""
+        var lines = 1
+        for (word in words) {
+            val candidate = if (line.isBlank()) word else "$line $word"
+            if (paint.measureText(candidate) > maxWidth && line.isNotBlank()) {
+                lines++
+                line = word
+            } else {
+                line = candidate
+            }
+        }
+        return lines
     }
 
     private fun drawWrapped(

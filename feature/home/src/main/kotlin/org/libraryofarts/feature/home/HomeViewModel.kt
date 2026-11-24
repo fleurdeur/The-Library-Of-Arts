@@ -1,7 +1,11 @@
 package org.libraryofarts.feature.home
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import coil3.SingletonImageLoader
+import coil3.request.ImageRequest
+import coil3.request.allowHardware
 import dagger.Lazy
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -35,6 +39,7 @@ data class HomeUiState(
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
+    @dagger.hilt.android.qualifiers.ApplicationContext private val appContext: Context,
     private val homeRepository: Lazy<HomeRepository>,
     private val collections: Lazy<CollectionRepository>,
     private val artworkRepository: Lazy<ArtworkRepository>,
@@ -57,6 +62,7 @@ class HomeViewModel @Inject constructor(
     }.mapLatest { input ->
         runCatching { homeRepository.get().load() }.fold(
             onSuccess = { content ->
+                warmImageCache(content)
                 HomeUiState(
                     loading = false,
                     content = content,
@@ -104,9 +110,45 @@ class HomeViewModel @Inject constructor(
             }
         }
         viewModelScope.launch(AppDispatchers.io) {
-            // Seed only. Nothing reaches the network until the reader asks for
-            // new plates with a deliberate pull-to-refresh gesture.
+            // Seed only, and never auto-refresh on open. The feed is renewed
+            // only by a deliberate pull-to-refresh, or once every 24 hours.
             runCatching { artworkRepository.get().seedIfNeeded() }
+            runCatching {
+                val prefs = appContext.getSharedPreferences("library_refresh", Context.MODE_PRIVATE)
+                val last = prefs.getLong("home_network_at", 0L)
+                if (System.currentTimeMillis() - last >= 24L * 60 * 60 * 1000) {
+                    artworkRepository.get().refreshHighlights()
+                    prefs.edit().putLong("home_network_at", System.currentTimeMillis()).apply()
+                }
+            }
+        }
+    }
+
+    /** Fetches the first plates of a loaded feed into Coil's caches. */
+    private fun warmImageCache(content: HomeContent?) {
+        if (content == null) return
+        val loader = SingletonImageLoader.get(appContext)
+        val urls = buildList {
+            content.daily.image.localPath ?: content.daily.image.thumbnailUrl.takeIf { it.isNotBlank() }?.let { add(it) }
+            content.continueExploring.take(8).forEach { artwork ->
+                artwork.image.localPath ?: artwork.image.thumbnailUrl.takeIf { it.isNotBlank() }?.let { add(it) }
+            }
+            content.sections.flatMap { it.items }.take(24).forEach { item ->
+                item.artwork.image.localPath ?: item.artwork.image.thumbnailUrl.takeIf { it.isNotBlank() }?.let { add(it) }
+            }
+        }.distinct()
+        urls.forEach { url ->
+            val request = ImageRequest.Builder(appContext)
+                .data(url)
+                .memoryCacheKey(url)
+                .diskCacheKey(url)
+                .allowHardware(false)
+                .build()
+            kotlinx.coroutines.Dispatchers.IO.let {
+                viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                    runCatching { loader.enqueue(request) }
+                }
+            }
         }
     }
 
@@ -114,7 +156,13 @@ class HomeViewModel @Inject constructor(
         if (_refreshing.value) return
         _refreshing.value = true
         viewModelScope.launch(AppDispatchers.io) {
-            runCatching { artworkRepository.get().refreshHighlights(force = true) }
+            runCatching {
+                artworkRepository.get().refreshHighlights(force = true)
+                appContext.getSharedPreferences("library_refresh", Context.MODE_PRIVATE)
+                    .edit()
+                    .putLong("home_network_at", System.currentTimeMillis())
+                    .apply()
+            }
             refreshTick.value += 1
             _refreshing.value = false
         }

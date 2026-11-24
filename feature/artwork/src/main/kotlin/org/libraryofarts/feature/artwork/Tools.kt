@@ -427,18 +427,9 @@ fun JournalEditorDialog(
     }
 }
 
-private enum class StudyLens(val label: String, val note: String) {
-    VISIBLE("Visible light", "The painting as the eye receives it."),
-    INFRARED("Infrared", "A false-colour reading that can suggest underdrawing and changes beneath the surface."),
-    X_RAY("X-ray", "An inverted, high-contrast view of density and structure."),
-    UNDERDRAWING("Underdrawing", "A blue, flattened reading that pulls line and shadow forward."),
-    BEFORE("Before restoration", "A warmer, faded treatment, like an older varnish and older colour balance."),
-    AFTER("After restoration", "A cleaner, more saturated treatment, like fresh surface cleaning."),
-}
-
-private fun StudyLens.matrix(): ColorMatrix? = when (this) {
-    StudyLens.VISIBLE -> null
-    StudyLens.INFRARED -> ColorMatrix(
+private fun org.libraryofarts.core.model.StudyLens.matrix(): ColorMatrix? = when (this) {
+    org.libraryofarts.core.model.StudyLens.NONE -> null
+    org.libraryofarts.core.model.StudyLens.INFRARED -> ColorMatrix(
         floatArrayOf(
             0.15f, 1.45f, 0.05f, 0f, 8f,
             0.05f, 0.45f, 0.70f, 0f, 0f,
@@ -446,7 +437,7 @@ private fun StudyLens.matrix(): ColorMatrix? = when (this) {
             0f, 0f, 0f, 1f, 0f,
         ),
     )
-    StudyLens.X_RAY -> ColorMatrix(
+    org.libraryofarts.core.model.StudyLens.X_RAY -> ColorMatrix(
         floatArrayOf(
             -0.70f, -0.70f, -0.70f, 0f, 245f,
             -0.70f, -0.70f, -0.70f, 0f, 245f,
@@ -454,7 +445,7 @@ private fun StudyLens.matrix(): ColorMatrix? = when (this) {
             0f, 0f, 0f, 1f, 0f,
         ),
     )
-    StudyLens.UNDERDRAWING -> ColorMatrix(
+    org.libraryofarts.core.model.StudyLens.UNDERDRAWING -> ColorMatrix(
         floatArrayOf(
             -0.45f, -0.45f, -0.45f, 0f, 228f,
             -0.35f, -0.35f, -0.35f, 0f, 226f,
@@ -462,7 +453,7 @@ private fun StudyLens.matrix(): ColorMatrix? = when (this) {
             0f, 0f, 0f, 1f, 0f,
         ),
     )
-    StudyLens.BEFORE -> ColorMatrix(
+    org.libraryofarts.core.model.StudyLens.BEFORE -> ColorMatrix(
         floatArrayOf(
             0.82f, 0.46f, 0.22f, 0f, 12f,
             0.44f, 0.72f, 0.22f, 0f, 10f,
@@ -470,7 +461,7 @@ private fun StudyLens.matrix(): ColorMatrix? = when (this) {
             0f, 0f, 0f, 1f, 0f,
         ),
     )
-    StudyLens.AFTER -> ColorMatrix(
+    org.libraryofarts.core.model.StudyLens.AFTER -> ColorMatrix(
         floatArrayOf(
             1.22f, -0.08f, -0.05f, 0f, -8f,
             -0.06f, 1.24f, -0.05f, 0f, -8f,
@@ -481,8 +472,13 @@ private fun StudyLens.matrix(): ColorMatrix? = when (this) {
 }
 
 @Composable
-fun TechnicalStudyDialog(artwork: Artwork, onDismiss: () -> Unit) {
-    var lens by remember { mutableStateOf(StudyLens.VISIBLE) }
+fun TechnicalStudyDialog(
+    artwork: Artwork,
+    selected: org.libraryofarts.core.model.StudyLens = org.libraryofarts.core.model.StudyLens.NONE,
+    onSelect: (org.libraryofarts.core.model.StudyLens) -> Unit = {},
+    onDismiss: () -> Unit,
+) {
+    var lens by remember { mutableStateOf(selected) }
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             shape = RoundedCornerShape(1.dp),
@@ -517,11 +513,14 @@ fun TechnicalStudyDialog(artwork: Artwork, onDismiss: () -> Unit) {
                 )
                 Spacer(Modifier.height(10.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    items(StudyLens.entries) { entry ->
+                    items(org.libraryofarts.core.model.StudyLens.entries) { entry ->
                         LibraryPill(
                             text = entry.label,
                             selected = lens == entry,
-                            onClick = { lens = entry },
+                            onClick = {
+                                lens = entry
+                                onSelect(entry)
+                            },
                         )
                     }
                 }

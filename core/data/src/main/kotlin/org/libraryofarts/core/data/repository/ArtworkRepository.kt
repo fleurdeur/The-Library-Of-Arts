@@ -83,14 +83,16 @@ class ArtworkRepository @Inject constructor(
     suspend fun refreshHighlights(force: Boolean = false): Int {
         val now = System.currentTimeMillis()
         val last = refreshPrefs.getLong("highlights_at", 0L)
-        if (!force && now - last < HIGHLIGHT_COOLDOWN_MILLIS && artworkDao.count() > 0) return 0
+        // 24 hours, matching the Home policy: the feed never refreshes more
+        // than once a day unless the reader pulls down deliberately.
+        if (!force && now - last < DAILY_REFRESH_MILLIS && artworkDao.count() > 0) return 0
         val count = refreshFromNetwork("")
         if (count > 0) refreshPrefs.edit().putLong("highlights_at", now).apply()
         return count
     }
 
     private companion object {
-        const val HIGHLIGHT_COOLDOWN_MILLIS = 30L * 60 * 1000
+        const val DAILY_REFRESH_MILLIS = 24L * 60 * 60 * 1000
     }
 
     suspend fun dailyArtwork(epochDay: Long): Artwork {

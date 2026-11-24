@@ -210,7 +210,12 @@ fun ArtworkRoute(
         LayerDialog(layer, onDismiss = { layerDialog = null })
     }
     if (showTechnicalStudy && artwork != null) {
-        TechnicalStudyDialog(artwork, onDismiss = { showTechnicalStudy = false })
+        TechnicalStudyDialog(
+            artwork = artwork,
+            selected = state.lens,
+            onSelect = { viewModel.selectLens(it) },
+            onDismiss = { showTechnicalStudy = false },
+        )
     }
 }
 
@@ -259,6 +264,7 @@ private fun ArtworkScreen(
                         .height(500.dp),
                     brushstroke = state.brushstroke,
                     showAnnotations = showAnnotations,
+                    lens = state.lens,
                     onZoom = onZoom,
                 )
                 Row(

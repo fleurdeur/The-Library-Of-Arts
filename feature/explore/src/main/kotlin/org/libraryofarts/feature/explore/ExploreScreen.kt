@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -58,6 +59,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.input.pointer.pointerInput
@@ -482,6 +484,9 @@ private fun ExploreTabs(selected: ExploreMode, onSelect: (ExploreMode) -> Unit) 
 @Composable
 private fun MuseumWorldMap(museums: List<Museum>, onMuseum: (Museum) -> Unit) {
     var selected by remember { mutableStateOf<Museum?>(null) }
+    var zoom by remember { mutableStateOf(1f) }
+    var panX by remember { mutableStateOf(0f) }
+    var panY by remember { mutableStateOf(0f) }
     val markerPositions = remember(museums) {
         museums.associate { museum ->
             museum.id to Offset(
@@ -522,29 +527,60 @@ private fun MuseumWorldMap(museums: List<Museum>, onMuseum: (Museum) -> Unit) {
                     .height(mapHeight)
                     .clip(RoundedCornerShape(1.dp))
                     .background(Color(0xFFE5DDCD))
-                    .border(1.dp, Color(0xFFC8BDA8), RoundedCornerShape(1.dp)),
+                    .border(1.dp, Color(0xFFC8BDA8), RoundedCornerShape(1.dp))
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, gestureZoom, _ ->
+                            val maxPan = 600.dp.toPx() * zoom
+                            zoom = (zoom * gestureZoom).coerceIn(1f, 6f)
+                            if (zoom <= 1.02f) {
+                                panX = 0f
+                                panY = 0f
+                            } else {
+                                panX = (panX + pan.x).coerceIn(-maxPan, maxPan)
+                                panY = (panY + pan.y).coerceIn(-maxPan, maxPan)
+                            }
+                        }
+                    }
+                    .pointerInput(museums) {
+                        detectTapGestures(
+                            onDoubleTap = { _ ->
+                                if (zoom > 1.6f) {
+                                    zoom = 1f
+                                    panX = 0f
+                                    panY = 0f
+                                } else {
+                                    zoom = 3.4f
+                                }
+                            },
+                        ) { tap ->
+                            val threshold = 34.dp.toPx() * zoom
+                            val localX = (tap.x - panX) / zoom
+                            val localY = (tap.y - panY) / zoom
+                            val nearest = markerPositions.minByOrNull { (_, position) ->
+                                val dx = position.x * size.width - localX
+                                val dy = position.y * size.height - localY
+                                dx * dx + dy * dy
+                            }
+                            if (nearest != null) {
+                                val position = nearest.value
+                                val dx = position.x * size.width - localX
+                                val dy = position.y * size.height - localY
+                                if (dx * dx + dy * dy < threshold * threshold) {
+                                    selected = museums.first { it.id == nearest.key }
+                                }
+                            }
+                        }
+                    },
             ) {
                 Canvas(
                     modifier = Modifier
                         .fillMaxSize()
-                        .pointerInput(museums) {
-                            detectTapGestures { tap ->
-                                val threshold = 34.dp.toPx()
-                                val nearest = markerPositions.minByOrNull { (_, position) ->
-                                    val dx = position.x * size.width - tap.x
-                                    val dy = position.y * size.height - tap.y
-                                    dx * dx + dy * dy
-                                }
-                                if (nearest != null) {
-                                    val position = nearest.value
-                                    val dx = position.x * size.width - tap.x
-                                    val dy = position.y * size.height - tap.y
-                                    if (dx * dx + dy * dy < threshold * threshold) {
-                                        selected = museums.first { it.id == nearest.key }
-                                    }
-                                }
-                            }
-                        },
+                        .graphicsLayer(
+                            scaleX = zoom,
+                            scaleY = zoom,
+                            translationX = panX,
+                            translationY = panY,
+                        ),
                 ) {
                     val paper = Color(0xFFE5DDCD)
                     val landFill = Color(0xFFF8F4EB)
@@ -663,6 +699,17 @@ private fun MuseumWorldMap(museums: List<Museum>, onMuseum: (Museum) -> Unit) {
                         .align(Alignment.TopStart)
                         .padding(start = 14.dp, top = 27.dp),
                 )
+                if (zoom > 1.05f) {
+                    Text(
+                        "%.1f×  ·  DOUBLE-TAP TO RESET".format(zoom),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFF534A3E),
+                        fontSize = 8.sp,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(end = 14.dp, top = 12.dp),
+                    )
+                }
                 Text(
                     "${museums.size} MUSEUMS",
                     style = MaterialTheme.typography.labelSmall,

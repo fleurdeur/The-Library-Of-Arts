@@ -653,7 +653,7 @@ fun KidsRoute(onBack: () -> Unit, onOpenArtwork: (String) -> Unit, games: GamesV
                     item("words") {
                         Column(modifier = Modifier.padding(20.dp)) {
                             Text(artwork.title, style = MaterialTheme.typography.headlineMedium)
-                            Text("by ${artwork.artist}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                            Text("by ${artwork.displayArtist}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.height(12.dp))
                             Text(
                                 "What colours can you find?",
