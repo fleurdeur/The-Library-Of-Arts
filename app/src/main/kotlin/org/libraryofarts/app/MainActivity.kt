@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -196,12 +197,18 @@ private fun LibraryApp(prefs: UserPreferences) {
                 }
             },
         ) { padding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.TopCenter,
+            ) {
             NavHost(
                 navController = nav,
                 startDestination = Route.HOME,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding),
+                    .widthIn(max = 920.dp),
             ) {
                 composable(
                     Route.HOME,
@@ -366,6 +373,7 @@ private fun LibraryApp(prefs: UserPreferences) {
                         onBack = { nav.popBackStack() },
                     )
                 }
+            }
             }
         }
     }

@@ -104,6 +104,9 @@ data class QuizQuestion(
     val explanation: String,
     val artworkId: String? = null,
     val kind: QuizKind = QuizKind.GENERAL,
+    val focusX: Float = 0.5f,
+    val focusY: Float = 0.5f,
+    val zoom: Float = 1f,
 )
 
 @Serializable

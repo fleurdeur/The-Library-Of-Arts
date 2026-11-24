@@ -8,11 +8,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,6 +37,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.layout.ContentScale
@@ -417,6 +422,128 @@ fun JournalEditorDialog(
                         )
                     },
                 )
+            }
+        }
+    }
+}
+
+private enum class StudyLens(val label: String, val note: String) {
+    VISIBLE("Visible light", "The painting as the eye receives it."),
+    INFRARED("Infrared", "A false-colour reading that can suggest underdrawing and changes beneath the surface."),
+    X_RAY("X-ray", "An inverted, high-contrast view of density and structure."),
+    UNDERDRAWING("Underdrawing", "A blue, flattened reading that pulls line and shadow forward."),
+    BEFORE("Before restoration", "A warmer, faded treatment, like an older varnish and older colour balance."),
+    AFTER("After restoration", "A cleaner, more saturated treatment, like fresh surface cleaning."),
+}
+
+private fun StudyLens.matrix(): ColorMatrix? = when (this) {
+    StudyLens.VISIBLE -> null
+    StudyLens.INFRARED -> ColorMatrix(
+        floatArrayOf(
+            0.15f, 1.45f, 0.05f, 0f, 8f,
+            0.05f, 0.45f, 0.70f, 0f, 0f,
+            0.40f, 0.05f, 1.15f, 0f, 0f,
+            0f, 0f, 0f, 1f, 0f,
+        ),
+    )
+    StudyLens.X_RAY -> ColorMatrix(
+        floatArrayOf(
+            -0.70f, -0.70f, -0.70f, 0f, 245f,
+            -0.70f, -0.70f, -0.70f, 0f, 245f,
+            -0.70f, -0.70f, -0.70f, 0f, 255f,
+            0f, 0f, 0f, 1f, 0f,
+        ),
+    )
+    StudyLens.UNDERDRAWING -> ColorMatrix(
+        floatArrayOf(
+            -0.45f, -0.45f, -0.45f, 0f, 228f,
+            -0.35f, -0.35f, -0.35f, 0f, 226f,
+            0.80f, 0.80f, 0.80f, 0f, 24f,
+            0f, 0f, 0f, 1f, 0f,
+        ),
+    )
+    StudyLens.BEFORE -> ColorMatrix(
+        floatArrayOf(
+            0.82f, 0.46f, 0.22f, 0f, 12f,
+            0.44f, 0.72f, 0.22f, 0f, 10f,
+            0.32f, 0.40f, 0.48f, 0f, 18f,
+            0f, 0f, 0f, 1f, 0f,
+        ),
+    )
+    StudyLens.AFTER -> ColorMatrix(
+        floatArrayOf(
+            1.22f, -0.08f, -0.05f, 0f, -8f,
+            -0.06f, 1.24f, -0.05f, 0f, -8f,
+            -0.05f, -0.08f, 1.28f, 0f, -8f,
+            0f, 0f, 0f, 1f, 0f,
+        ),
+    )
+}
+
+@Composable
+fun TechnicalStudyDialog(artwork: Artwork, onDismiss: () -> Unit) {
+    var lens by remember { mutableStateOf(StudyLens.VISIBLE) }
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(1.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        ) {
+            Column(modifier = Modifier.padding(18.dp)) {
+                Text(
+                    "TECHNICAL STUDY",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(artwork.title, style = MaterialTheme.typography.titleLarge, maxLines = 2)
+                Text(
+                    "${artwork.displayArtist} · ${artwork.year.ifBlank { "date unrecorded" }}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(10.dp))
+                AsyncImage(
+                    model = artwork.image.localPath?.let { java.io.File(it) }
+                        ?: artwork.image.thumbnailUrl,
+                    contentDescription = "Technical study of ${artwork.title}",
+                    contentScale = ContentScale.Fit,
+                    colorFilter = lens.matrix()?.let { ColorFilter.colorMatrix(it) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1.25f)
+                        .clip(RoundedCornerShape(1.dp))
+                        .background(Color(0xFF171512)),
+                )
+                Spacer(Modifier.height(10.dp))
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(StudyLens.entries) { entry ->
+                        LibraryPill(
+                            text = entry.label,
+                            selected = lens == entry,
+                            onClick = { lens = entry },
+                        )
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    lens.note,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "These are interpretive study lenses, not museum imaging. Real X-ray, infrared and restoration plates appear when a source supplies them.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    ArtButton("Close", onClick = onDismiss, filled = false)
+                }
             }
         }
     }

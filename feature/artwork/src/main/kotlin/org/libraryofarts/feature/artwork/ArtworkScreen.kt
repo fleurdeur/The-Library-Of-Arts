@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -105,6 +106,7 @@ fun ArtworkRoute(
     var showScale by remember { mutableStateOf(false) }
     var showShare by remember { mutableStateOf(false) }
     var showAnnotations by remember { mutableStateOf(false) }
+    var showTechnicalStudy by remember { mutableStateOf(false) }
     var layerDialog by remember { mutableStateOf<org.libraryofarts.core.model.ArtworkLayer?>(null) }
 
     DisposableEffect(Unit) {
@@ -146,6 +148,7 @@ fun ArtworkRoute(
                     onShare = { showShare = true },
                     onJournal = { showJournalDialog = true },
                     onSlowLooking = { showSlowLooking = true },
+                    onTechnicalStudy = { showTechnicalStudy = true },
                     onFrame = { showFrame = true },
                     onScale = { showScale = true },
                     onAr = { onOpenAr(state.artwork!!.id) },
@@ -206,6 +209,9 @@ fun ArtworkRoute(
     layerDialog?.let { layer ->
         LayerDialog(layer, onDismiss = { layerDialog = null })
     }
+    if (showTechnicalStudy && artwork != null) {
+        TechnicalStudyDialog(artwork, onDismiss = { showTechnicalStudy = false })
+    }
 }
 
 private fun interpretationText(state: ArtworkUiState): String = state.interpretation
@@ -220,6 +226,7 @@ private fun ArtworkScreen(
     onShare: () -> Unit,
     onJournal: () -> Unit,
     onSlowLooking: () -> Unit,
+    onTechnicalStudy: () -> Unit,
     onFrame: () -> Unit,
     onScale: () -> Unit,
     onAr: () -> Unit,
@@ -283,7 +290,7 @@ private fun ArtworkScreen(
             ) {
                 LibraryPill(artwork.license.shortLabel)
                 artwork.genre?.let { LibraryPill(it) }
-                artwork.period?.let { LibraryPill(it) }
+                artwork.displayPeriod?.let { LibraryPill(it) }
             }
         }
         item("artist-line") {
@@ -311,6 +318,7 @@ private fun ArtworkScreen(
                 ActionChip(if (state.brushstroke) "Brushstroke on" else "Brushstroke", Icons.Default.Brush, onToggleBrushstroke)
                 ActionChip(if (state.comparison == null) "Your eyes first" else "Your reading", Icons.Default.Edit, onJournal)
                 ActionChip("Slow look", Icons.Default.Headphones, onSlowLooking)
+                ActionChip("Technical lens", Icons.Default.Visibility, onTechnicalStudy)
                 if (artwork.annotations.isNotEmpty()) ActionChip("Details", Icons.Default.Brush, onToggleAnnotations)
             }
         }

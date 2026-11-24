@@ -15,6 +15,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -58,7 +59,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,7 +70,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.libraryofarts.core.data.seed.SeedArtworks
 import org.libraryofarts.core.designsystem.component.ArtButton
 import org.libraryofarts.core.designsystem.component.EmptyState
 import org.libraryofarts.core.designsystem.component.GlassCard
@@ -76,6 +78,7 @@ import org.libraryofarts.core.designsystem.component.SectionHeader
 import org.libraryofarts.core.designsystem.component.SoftBackdrop
 import org.libraryofarts.core.model.Artwork
 import org.libraryofarts.core.model.QuizKind
+import org.libraryofarts.core.model.QuizQuestion
 import org.libraryofarts.core.ui.ArtworkCard
 import org.libraryofarts.core.ui.ArtworkImage
 import org.libraryofarts.core.ui.ArtworkWideCard
@@ -103,7 +106,10 @@ fun GamesRoute(
     onOpenScan: () -> Unit,
     onOpenKids: () -> Unit,
     onOpenArtwork: (String) -> Unit,
+    games: GamesViewModel = hiltViewModel(),
 ) {
+    val pool by games.pool.collectAsStateWithLifecycle()
+    val plates = remember(pool) { pool.shuffled().take(8) }
     SoftBackdrop {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -124,6 +130,30 @@ fun GamesRoute(
                     "Looking games",
                     "Small exercises that reward attention rather than speed. Everything works without a connection.",
                 )
+            }
+            if (plates.isNotEmpty()) {
+                item("plates") {
+                    Column {
+                        Text(
+                            "PLATES IN PLAY · ${pool.size} WORKS",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                        )
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 20.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            items(plates, key = { it.id }) { artwork ->
+                                ArtworkCard(
+                                    artwork = artwork,
+                                    onClick = { onOpenArtwork(artwork.id) },
+                                    width = 148.dp,
+                                )
+                            }
+                        }
+                    }
+                }
             }
             items(Game.entries, key = { it.name }) { game ->
                 GlassCard(
@@ -183,9 +213,11 @@ fun QuizRoute(
     quiz: QuizViewModel = hiltViewModel(),
 ) {
     val parsed = runCatching { QuizKind.valueOf(kind) }.getOrDefault(QuizKind.GENERAL)
-    val questions = remember(parsed) { games.quiz(parsed) }
+    val pool by games.pool.collectAsStateWithLifecycle()
     val state by quiz.state.collectAsStateWithLifecycle()
-    LaunchedEffect(parsed) { quiz.start(questions) }
+    LaunchedEffect(parsed, pool.size) {
+        if (pool.isNotEmpty()) quiz.startIfNeeded(parsed, pool)
+    }
     val labels = mapOf(
         QuizKind.GENERAL to "Daily quiz",
         QuizKind.GUESS_THE_ARTIST to "Guess the artist",
@@ -237,7 +269,7 @@ fun QuizRoute(
                     item("progress") {
                         Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)) {
                             Text(
-                                "Question ${state.index + 1} of ${state.questions.size} · Score ${state.score}",
+                                "PLATE ${state.index + 1} · LEVEL ${state.level} · SCORE ${state.score} / ${state.answered}",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.primary,
                             )
@@ -251,32 +283,31 @@ fun QuizRoute(
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .fillMaxWidth((state.index + 1f) / state.questions.size)
+                                        .fillMaxWidth(state.levelProgress.coerceIn(0.04f, 1f))
                                         .fillMaxHeight()
                                         .background(MaterialTheme.colorScheme.primary),
                                 )
                             }
+                            Text(
+                                if (state.correct == null) {
+                                    "Three right answers open a harder shelf."
+                                } else if (state.correct == true) {
+                                    "Noticed. The next plate moves one step deeper."
+                                } else {
+                                    "A miss is still a look. The next plate is waiting."
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 4.dp),
+                            )
                         }
                     }
                     item("prompt") {
                         Column(modifier = Modifier.padding(20.dp)) {
-                            if (parsed == QuizKind.DETAIL_HUNT) {
-                                val artwork = question.artworkId?.let { SeedArtworks.byId[it] }
+                            question.artworkId?.let { id ->
+                                val artwork = pool.firstOrNull { it.id == id }
                                 if (artwork != null) {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .aspectRatio(1.6f)
-                                            .clip(RoundedCornerShape(1.dp))
-                                            .clipToBounds(),
-                                    ) {
-                                        ArtworkImage(
-                                            artwork,
-                                            Modifier
-                                                .fillMaxSize()
-                                                .graphicsLayer(scaleX = 2.4f, scaleY = 2.4f),
-                                        )
-                                    }
+                                    QuestionPlate(artwork = artwork, question = question)
                                 }
                             }
                             Spacer(Modifier.height(14.dp))
@@ -331,13 +362,85 @@ fun QuizRoute(
                                     question.artworkId?.let { id ->
                                         TextButton(onClick = { onOpenArtwork(id) }) { Text("Look at the work") }
                                     }
-                                    ArtButton("Next", onClick = quiz::next)
+                                    ArtButton("Next plate", onClick = quiz::next)
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun QuestionPlate(artwork: Artwork, question: QuizQuestion) {
+    val detail = question.kind == QuizKind.DETAIL_HUNT
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(if (detail) 1.25f else 1.45f)
+            .clip(RoundedCornerShape(1.dp))
+            .clipToBounds()
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        if (detail) {
+            val density = LocalDensity.current
+            val zoom = question.zoom.coerceAtLeast(1f)
+            val offsetX = with(density) { ((0.5f - question.focusX) * maxWidth.toPx() * zoom) }
+            val offsetY = with(density) { ((0.5f - question.focusY) * maxHeight.toPx() * zoom) }
+            ArtworkImage(
+                artwork,
+                Modifier
+                    .fillMaxSize()
+                    .graphicsLayer(
+                        scaleX = zoom,
+                        scaleY = zoom,
+                        translationX = offsetX,
+                        translationY = offsetY,
+                    ),
+                contentScale = ContentScale.Crop,
+            )
+            Text(
+                "DETAIL · %.1f×".format(zoom),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(10.dp)
+                    .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(1.dp))
+                    .padding(horizontal = 8.dp, vertical = 5.dp),
+            )
+        } else {
+            ArtworkImage(
+                artwork,
+                Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop,
+            )
+            Text(
+                artwork.museum.shortName.uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(10.dp)
+                    .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(1.dp))
+                    .padding(horizontal = 8.dp, vertical = 5.dp),
+            )
+        }
+        if (question.kind != QuizKind.DETAIL_HUNT && question.kind != QuizKind.SPOT_THE_FAKE) {
+            Text(
+                artwork.title,
+                style = MaterialTheme.typography.labelSmall,
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .fillMaxWidth()
+                    .background(Color.Black.copy(alpha = 0.52f))
+                    .padding(horizontal = 10.dp, vertical = 7.dp),
+            )
         }
     }
 }

@@ -44,6 +44,9 @@ data class Artwork(
     val packId: String? = null,
 ) {
     val displayArtist: String get() = artist?.name ?: "Unknown artist"
+    val displayPeriod: String? get() = period
+        ?.takeUnless { it.isBlank() || it.equals("Unknown period", true) || it.equals("Unknown", true) }
+        ?: movement?.takeIf { it.isNotBlank() }
     val dominantColor: Long get() = palette.maxByOrNull { it.population }?.argb ?: 0xFF2A2622
     val hasHighResolution: Boolean get() = image.width >= 4_000 || image.iiifBase != null
 }

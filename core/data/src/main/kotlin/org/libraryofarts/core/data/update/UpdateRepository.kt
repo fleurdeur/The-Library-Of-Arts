@@ -38,7 +38,8 @@ data class UpdateAsset(
         get() = when {
             sizeBytes >= 1L shl 20 -> "%.1f MB".format(sizeBytes / 1024.0 / 1024.0)
             sizeBytes >= 1024 -> "%.0f KB".format(sizeBytes / 1024.0)
-            else -> "$sizeBytes B"
+            sizeBytes > 0 -> "$sizeBytes B"
+            else -> "APK"
         }
 }
 
@@ -99,45 +100,100 @@ class UpdateRepository @Inject constructor(
                 return@withContext cached.toCheck(currentVersion, fromCache = true)
             }
 
-            val request = Request.Builder()
-                .url("https://api.github.com/repos/fleurdeur/The-Library-Of-Arts/releases?per_page=20")
-                .header("Accept", "application/vnd.github+json")
-                .header("X-GitHub-Api-Version", "2022-11-28")
-                .build()
-            val response = runCatching { client.newCall(request).execute() }.getOrNull()
-            response.use { result ->
-                if (result == null) {
-                    return@withContext cached?.toCheck(currentVersion, fromCache = true)
-                        ?: UpdateCheck(currentVersion, error = "GitHub could not be reached. Check your connection and try again.")
-                }
-                if (!result.isSuccessful) {
-                    val friendly = when (result.code) {
-                        403, 429 -> "GitHub is limiting update checks for a little while. The app will try again later."
-                        404 -> "The release feed could not be found."
-                        else -> "GitHub returned ${result.code}. Try again in a moment."
-                    }
-                    return@withContext cached?.toCheck(currentVersion, fromCache = true)?.copy(error = friendly)
-                        ?: UpdateCheck(currentVersion, error = friendly)
-                }
-                val body = result.body?.string().orEmpty()
-                val releases = runCatching { json.decodeFromString<List<GitHubRelease>>(body) }.getOrNull()
-                    ?: return@withContext cached?.toCheck(currentVersion, fromCache = true)
-                        ?: UpdateCheck(currentVersion, error = "The release feed was not readable.")
-                val latest = releases
-                    .asSequence()
-                    .filter { !it.draft && !it.prerelease }
-                    .filter { STABLE_TAG.matches(it.tagName) }
-                    .mapNotNull { it.toUpdate() }
-                    .maxByOrNull { it.versionCode }
-                    ?: return@withContext UpdateCheck(currentVersion, error = "No published app release was found.")
+            // The API is the richest source. GitHub also rate-limits or blocks
+            // anonymous API calls in some networks, so fall back to the public
+            // Atom feed and then to a tiny JSON mirror in this repository.
+            val api = fetchText(RELEASES_API, "application/vnd.github+json")
+                ?.let { runCatching { json.decodeFromString<List<GitHubRelease>>(it) }.getOrNull() }
+                ?.asSequence()
+                ?.filter { !it.draft && !it.prerelease }
+                ?.filter { STABLE_TAG.matches(it.tagName) }
+                ?.mapNotNull { it.toUpdate() }
+                ?.maxByOrNull { it.versionCode }
+            if (api != null) return@withContext remember(api, now).toCheck(currentVersion)
 
-                prefs.edit()
-                    .putLong(KEY_CHECKED_AT, now)
-                    .putString(KEY_CACHE, json.encodeToString(latest))
-                    .apply()
-                latest.toCheck(currentVersion)
-            }
+            val atom = fetchText(RELEASES_ATOM, "application/atom+xml, application/xml, text/xml")
+                ?.let(::latestFromAtom)
+            if (atom != null) return@withContext remember(atom, now).toCheck(currentVersion)
+
+            val mirror = fetchText(RELEASES_MIRROR, "application/json")
+                ?.let { runCatching { json.decodeFromString<ReleaseMirror>(it) }.getOrNull() }
+                ?.latest
+                ?.toUpdate()
+            if (mirror != null) return@withContext remember(mirror, now).toCheck(currentVersion)
+
+            cached?.toCheck(currentVersion, fromCache = true)?.copy(
+                error = "The release feed could not be reached. This is usually a network filter or a temporary GitHub outage; the cached edition is shown below.",
+            ) ?: UpdateCheck(
+                currentVersion = currentVersion,
+                error = "The release feed could not be reached. Check the connection, or open github.com/fleurdeur/The-Library-Of-Arts/releases in a browser.",
+            )
         }
+
+    private fun remember(update: AppUpdate, now: Long): AppUpdate {
+        prefs.edit()
+            .putLong(KEY_CHECKED_AT, now)
+            .putString(KEY_CACHE, json.encodeToString(update))
+            .apply()
+        return update
+    }
+
+    private fun fetchText(url: String, accept: String): String? {
+        val request = Request.Builder()
+            .url(url)
+            .header("Accept", accept)
+            .header("X-GitHub-Api-Version", "2022-11-28")
+            .build()
+        return runCatching {
+            client.newCall(request).execute().use { response ->
+                if (response.isSuccessful) response.body?.string() else null
+            }
+        }.getOrNull()
+    }
+
+    private fun latestFromAtom(atom: String): AppUpdate? {
+        val entries = Regex("<entry>(.*?)</entry>", RegexOption.DOT_MATCHES_ALL).findAll(atom)
+        for (entry in entries) {
+            val block = entry.groupValues.getOrNull(1).orEmpty()
+            val href = Regex("""<link[^>]+href="([^"]+)"""")
+                .find(block)?.groupValues?.getOrNull(1).orEmpty()
+            val tag = Regex("""/releases/tag/(v\d+\.\d+\.\d+)""").find(href)?.groupValues?.getOrNull(1)
+                ?: continue
+            if (!STABLE_TAG.matches(tag)) continue
+            val version = tag.removePrefix("v")
+            val title = Regex("<title>(.*?)</title>", RegexOption.DOT_MATCHES_ALL)
+                .find(block)?.groupValues?.getOrNull(1)
+                ?.replace("&amp;", "&")
+                ?.trim()
+                .orEmpty()
+            val updated = Regex("<updated>(.*?)</updated>")
+                .find(block)?.groupValues?.getOrNull(1).orEmpty()
+            val assets = UpdateArchitecture.entries.map { architecture ->
+                val suffix = when (architecture) {
+                    UpdateArchitecture.UNIVERSAL -> "universal"
+                    UpdateArchitecture.ARM64 -> "arm64-v8a"
+                    UpdateArchitecture.ARMV7 -> "armeabi-v7a"
+                }
+                val name = "TheGreatLibraryOfArts-$version-$suffix.apk"
+                UpdateAsset(
+                    architecture = architecture,
+                    name = name,
+                    url = "${RELEASES_DOWNLOAD}/$tag/$name",
+                    sizeBytes = 0,
+                    sha256 = null,
+                )
+            }
+            return AppUpdate(
+                tag = tag,
+                versionName = version,
+                releaseName = title.ifBlank { "The Great Library of Arts $version" },
+                notes = "Read the full edition notes at github.com/fleurdeur/The-Library-Of-Arts/releases/tag/$tag",
+                publishedAt = updated,
+                assets = assets,
+            )
+        }
+        return null
+    }
 
     suspend fun download(
         asset: UpdateAsset,
@@ -146,7 +202,9 @@ class UpdateRepository @Inject constructor(
         runCatching {
             val dir = updateDir()
             val destination = File(dir, asset.name)
-            val existing = destination.takeIf { it.exists() && it.length() == asset.sizeBytes }
+            val existing = destination.takeIf {
+                it.exists() && asset.sizeBytes > 0 && it.length() == asset.sizeBytes
+            }
             if (existing != null && asset.sha256.isNullOrBlank()) {
                 onProgress(UpdateDownloadProgress(existing.length(), existing.length(), UpdateDownloadProgress.State.READY))
                 return@runCatching existing
@@ -342,6 +400,54 @@ class UpdateRepository @Inject constructor(
         val assets: List<GitHubAsset> = emptyList(),
     )
 
+    @Serializable
+    private data class ReleaseMirror(val latest: MirrorRelease? = null)
+
+    @Serializable
+    private data class MirrorRelease(
+        val tag: String = "",
+        val version: String = "",
+        val name: String = "",
+        val notes: String = "",
+        @kotlinx.serialization.SerialName("published_at") val publishedAt: String = "",
+        val assets: List<MirrorAsset> = emptyList(),
+    ) {
+        fun toUpdate(): AppUpdate? {
+            val versionName = version.ifBlank { tag.removePrefix("v") }
+            if (!STABLE_TAG.matches(tag) || versionName.isBlank()) return null
+            return AppUpdate(
+                tag = tag,
+                versionName = versionName,
+                releaseName = name.ifBlank { "The Great Library of Arts $versionName" },
+                notes = notes,
+                publishedAt = publishedAt,
+                assets = assets.mapNotNull { asset ->
+                    val architecture = when {
+                        asset.name.contains("universal", true) -> UpdateArchitecture.UNIVERSAL
+                        asset.name.contains("arm64", true) -> UpdateArchitecture.ARM64
+                        asset.name.contains("armeabi-v7a", true) || asset.name.contains("armv7", true) -> UpdateArchitecture.ARMV7
+                        else -> null
+                    } ?: return@mapNotNull null
+                    UpdateAsset(
+                        architecture = architecture,
+                        name = asset.name,
+                        url = asset.url,
+                        sizeBytes = asset.size,
+                        sha256 = asset.sha256,
+                    )
+                }.distinctBy { it.architecture }.sortedBy { it.architecture.ordinal },
+            )
+        }
+    }
+
+    @Serializable
+    private data class MirrorAsset(
+        val name: String = "",
+        val url: String = "",
+        val size: Long = 0,
+        val sha256: String? = null,
+    )
+
     private data class GitHubAsset(
         val name: String = "",
         @kotlinx.serialization.SerialName("browser_download_url") val browserDownloadUrl: String = "",
@@ -350,6 +456,10 @@ class UpdateRepository @Inject constructor(
     )
 
     private companion object {
+        const val RELEASES_API = "https://api.github.com/repos/fleurdeur/The-Library-Of-Arts/releases?per_page=20"
+        const val RELEASES_ATOM = "https://github.com/fleurdeur/The-Library-Of-Arts/releases.atom"
+        const val RELEASES_MIRROR = "https://raw.githubusercontent.com/fleurdeur/The-Library-Of-Arts/main/docs/releases.json"
+        const val RELEASES_DOWNLOAD = "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download"
         const val CACHE_MILLIS = 6L * 60 * 60 * 1000
         const val KEY_CHECKED_AT = "last_checked_at"
         const val KEY_CACHE = "last_release"

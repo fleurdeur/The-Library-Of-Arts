@@ -49,19 +49,25 @@
 - **Plain-language reasons** for every recommendation, with no hidden weights.
 - **Taste Profile screen** to see, adjust or reset everything the library has noticed.
 - **Licence, credit and provenance** shown on every artwork.
-- **In-app edition updates** — the library checks the public release feed, notifies you once per edition, and can download and install the matching APK without leaving the app.
+- **In-app edition updates** — checks the GitHub API, then the public Atom feed, then a bundled JSON mirror; notifies you once per edition and installs the APK that fits the device.
 
     </td>
     <td width="50%" valign="top">
 
+#### Look closer
+- **Technical lens**: infrared, X-ray, underdrawing, before-restoration and after-restoration readings over any plate.
+- **Endless looking games** generated from installed works, with level-based difficulty, bigger option sets, tighter detail crops and real artwork images.
+- **Detail hunt** asks which work a cropped detail belongs to; **Spot the fake** shows a plate and asks you to find the true label.
+
 #### Explore without a signal
 - **FTS5 search** across titles, artists, descriptions, tags and moods.
 - **Filters** for genre, period, museum, medium, mood, subject, colour and sort order.
-- **Museum world map** drawn locally, with no tile server.
+- **A drawn Natural Earth museum atlas** with real coastlines, graticule, compass and its own museum notes, with no tile server.
 - **Time Machine**, **Colour Search**, **Similar Art**, **Hidden Gems**, **Artist Connections** and **Museum Visit**.
 - **Offline floor guides** and museum audio stops.
 - **Seed library** installed with the app, so every screen works from first launch.
-- **Lazy, cached plates** — Coil loads only the images on screen, keeps a 256 MB disk cache and refreshes museum highlights at most once every 30 minutes.
+- **Technical study lenses** for infrared, X-ray, underdrawing and before/after restoration readings, clearly marked as interpretive filters rather than museum imaging.
+- **Fast, lazy plates** — Coil keeps a 256 MB disk cache; cards show an immediately cached thumbnail while the full painting fades in behind it. Home reaches the network only on a deliberate pull-to-refresh.
 
     </td>
   </tr>
@@ -178,6 +184,7 @@ Six real packs are published on the **[packs-v1 release](https://github.com/fleu
 - **Room indexing** after install, and clean pack deletion.
 - **Delta metadata support** for future updates.
 - **Public release downloads** — no private CDN or account is required.
+- **Images and metadata travel inside every pack**, matched by source id even when the archive uses a different image extension.
 - **Published now:** *Starter Salon* (23 works), *Impressionism & After* (6 works), *Dutch Golden Age* (7 works), *The Landscape Room* (8 works), *Portraits & Presences* (10 works) and *Rooms & Shadows* (7 works). Install them from Settings → Offline packs; each archive is checksum-pinned in the app, and an installed pack appears only once.
 
 The starter pack replaces the built-in seed records with local image copies, so the same plates work with the radio off. Pack deletion is clean and never removes journal entries or collections.
@@ -210,7 +217,7 @@ Grab the latest signed APK from **[Releases](https://github.com/fleurdeur/The-Li
 
 | Package | Best for | Size |
 | :--- | :--- | ---: |
-| **Universal APK** | Any phone or tablet — choose this if unsure | ~22 MB |
+| **Universal APK** | Any phone or tablet — choose this if unsure | ~23 MB |
 | **ARM64 APK** | Most modern phones and tablets (arm64-v8a) | ~16 MB |
 | **ARMv7 APK** | Older 32-bit phones and tablets (armeabi-v7a) | ~15 MB |
 | **Wear APK** | Wear OS 3.0+ companion | ~9 MB |

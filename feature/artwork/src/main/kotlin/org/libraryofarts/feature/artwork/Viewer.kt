@@ -1,5 +1,6 @@
 package org.libraryofarts.feature.artwork
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -29,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import coil3.request.crossfade
 import org.libraryofarts.core.model.Artwork
 import org.libraryofarts.core.model.ArtworkAnnotation
 
@@ -53,22 +53,23 @@ fun ArtworkViewer(
     var doubleTapZoom by remember(artwork.id) { mutableStateOf(false) }
     var showHint by remember { mutableStateOf(true) }
     val annotations = artwork.annotations
+    val local = artwork.image.localPath?.let { java.io.File(it) }
+    val thumbModel = local ?: artwork.image.thumbnailUrl
+    val fullModel = local ?: run {
+        val iiiF = artwork.image.iiifBase?.trimEnd('/')
+        if (iiiF != null) "$iiiF/full/2000,/0/default.jpg" else artwork.image.fullUrl.ifBlank { artwork.image.thumbnailUrl }
+    }
+    var fullLoaded by remember(artwork.id) { mutableStateOf(false) }
+    val fullAlpha by animateFloatAsState(if (fullLoaded) 1f else 0f, label = "plate-detail")
+    val showDetail = fullModel.toString() != thumbModel.toString()
+    val description = artwork.image.altText.ifBlank { "${artwork.title} by ${artwork.displayArtist}" }
 
     Box(
         modifier = modifier
             .clip(androidx.compose.foundation.shape.RoundedCornerShape(1.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
-        AsyncImage(
-            model = ImageRequest.Builder(context)
-                .data(
-                    artwork.image.localPath?.let { java.io.File(it) }
-                        ?: if (brushstroke) artwork.image.fullUrl else artwork.image.thumbnailUrl,
-                )
-                .crossfade(true)
-                .build(),
-            contentDescription = artwork.image.altText.ifBlank { "${artwork.title} by ${artwork.displayArtist}" },
-            contentScale = ContentScale.Fit,
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer(
@@ -112,7 +113,35 @@ fun ArtworkViewer(
                         },
                     )
                 },
-        )
+        ) {
+            // Usually already in Coil's memory cache from the card that opened
+            // this screen, so the painting appears immediately.
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(if (brushstroke && !showDetail) fullModel else thumbModel)
+                    .memoryCacheKey(thumbModel.toString())
+                    .diskCacheKey(thumbModel.toString())
+                    .build(),
+                contentDescription = description,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize(),
+            )
+            if (showDetail || brushstroke) {
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(fullModel)
+                        .memoryCacheKey(fullModel.toString())
+                        .diskCacheKey(fullModel.toString())
+                        .build(),
+                    contentDescription = description,
+                    contentScale = ContentScale.Fit,
+                    onSuccess = { fullLoaded = true },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer(alpha = if (brushstroke) 1f else fullAlpha),
+                )
+            }
+        }
 
         if (showAnnotations && annotations.isNotEmpty()) {
             AnnotationMarkers(artwork = artwork, annotations = annotations)

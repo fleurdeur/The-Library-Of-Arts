@@ -96,13 +96,20 @@ class PackInstaller @Inject constructor(
             if (artworks.isEmpty()) throw PackInstallException("The pack contains no readable artworks.")
 
             artworkDao.deletePackArtworks(manifest.id)
+            // Some packs use .jpg, .jpeg or .png for the same source id. Match
+            // by the file stem so every recorded plate resolves to its image.
+            val imageFiles = File(target, manifest.imagesDir).listFiles()
+                .orEmpty()
+                .filter { it.isFile }
+                .associateBy { it.nameWithoutExtension }
             artworkDao.upsertAll(
                 artworks.map { artwork ->
-                    val local = File(target, "${manifest.imagesDir}/${artwork.sourceId}.jpg")
+                    val local = imageFiles[artwork.sourceId]
+                        ?: File(target, "${manifest.imagesDir}/${artwork.sourceId}.jpg").takeIf { it.exists() }
                     artwork.copy(
                         packId = manifest.id,
                         image = artwork.image.copy(
-                            localPath = local.takeIf { it.exists() }?.absolutePath,
+                            localPath = local?.absolutePath,
                         ),
                     ).toEntity()
                 },

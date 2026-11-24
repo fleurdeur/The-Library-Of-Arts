@@ -46,8 +46,8 @@ internal object MapperSupport {
         }
     }
 
-    fun periodFor(year: Int?): String = when {
-        year == null -> "Unknown period"
+    fun periodFor(year: Int?): String? = when {
+        year == null -> null
         year < 500 -> "Ancient"
         year < 1400 -> "Medieval"
         year < 1600 -> "Renaissance"

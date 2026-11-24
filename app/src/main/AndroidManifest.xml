@@ -33,10 +33,12 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
+        android:appCategory="image"
         android:theme="@style/Theme.LibraryOfArts"
         tools:targetApi="36">
 
         <meta-data android:name="com.google.ar.core" android:value="optional" />
+        <meta-data android:name="com.android.launcher3.APP_CATEGORY" android:value="image" />
 
         <activity
             android:name=".MainActivity"

@@ -44,6 +44,8 @@ class HomeViewModel @Inject constructor(
     private val refreshTick = MutableStateFlow(0)
     private val _saved = MutableStateFlow<Set<String>>(emptySet())
     private val _online = MutableStateFlow(true)
+    private val _refreshing = MutableStateFlow(false)
+    val refreshing: StateFlow<Boolean> = _refreshing
 
     val state: StateFlow<HomeUiState> = combine(
         settings.preferences,
@@ -102,17 +104,20 @@ class HomeViewModel @Inject constructor(
             }
         }
         viewModelScope.launch(AppDispatchers.io) {
+            // Seed only. Nothing reaches the network until the reader asks for
+            // new plates with a deliberate pull-to-refresh gesture.
             runCatching { artworkRepository.get().seedIfNeeded() }
-            // Pull fresh paintings from every keyless source in the background.
-            // The seed library is already on screen, so this never blocks the
-            // first frame and a slow museum only enriches the next refresh.
-            runCatching { artworkRepository.get().refreshHighlights() }
-            refresh()
         }
     }
 
     fun refresh() {
-        refreshTick.value += 1
+        if (_refreshing.value) return
+        _refreshing.value = true
+        viewModelScope.launch(AppDispatchers.io) {
+            runCatching { artworkRepository.get().refreshHighlights(force = true) }
+            refreshTick.value += 1
+            _refreshing.value = false
+        }
     }
 
     fun toggleSave(artwork: Artwork) {

@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -48,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import coil3.request.crossfade
 import org.libraryofarts.core.designsystem.component.LibraryPill
 import org.libraryofarts.core.designsystem.component.SectionHeader
 import org.libraryofarts.core.designsystem.theme.EditorialFamily
@@ -77,10 +77,12 @@ fun ArtworkImage(
             .background(placeholder)
             .semantics { this.contentDescription = contentDescription.orEmpty() },
     ) {
+        val source = artwork.image.localPath?.let { java.io.File(it) } ?: artwork.image.thumbnailUrl
         AsyncImage(
             model = ImageRequest.Builder(context)
-                .data(artwork.image.localPath?.let { java.io.File(it) } ?: artwork.image.thumbnailUrl)
-                .crossfade(true)
+                .data(source)
+                .memoryCacheKey(source.toString())
+                .diskCacheKey(source.toString())
                 .build(),
             contentDescription = contentDescription,
             contentScale = contentScale,
@@ -99,9 +101,19 @@ fun ArtworkCard(
     width: Dp = 184.dp,
     showReason: String? = null,
 ) {
+    val screenWidth = LocalConfiguration.current.screenWidthDp
+    val responsiveWidth = if (width == 184.dp) {
+        when {
+            screenWidth >= 900 -> 248.dp
+            screenWidth >= 600 -> 214.dp
+            else -> width
+        }
+    } else {
+        width
+    }
     Column(
         modifier = modifier
-            .width(width)
+            .width(responsiveWidth)
             .clickable(role = Role.Button, onClick = onClick),
     ) {
         Box(
@@ -231,7 +243,7 @@ fun ArtworkWideCard(
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     artwork.genre?.let { LibraryPill(it) }
-                    artwork.period?.let { LibraryPill(it) }
+                    artwork.displayPeriod?.let { LibraryPill(it) }
                 }
             }
             if (onSave != null) {
@@ -360,7 +372,7 @@ fun ArtworkFacts(artwork: Artwork, modifier: Modifier = Modifier) {
         artwork.medium?.let { FactRow("Medium", it) }
         artwork.dimensions?.let { FactRow("Dimensions", it) }
         artwork.genre?.let { FactRow("Genre", it) }
-        artwork.period?.let { FactRow("Period", it) }
+        artwork.displayPeriod?.let { FactRow("Period", it) }
         artwork.movement?.let { FactRow("Movement", it) }
         artwork.accessionNumber?.let { FactRow("Accession", it) }
         FactRow("Licence", artwork.license.shortLabel)

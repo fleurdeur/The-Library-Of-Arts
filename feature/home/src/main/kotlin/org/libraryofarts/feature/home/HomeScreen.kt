@@ -23,13 +23,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import org.libraryofarts.core.designsystem.component.ArtButton
+import org.libraryofarts.core.designsystem.component.LibraryIconButton
 import org.libraryofarts.core.designsystem.component.LoadingPane
 import org.libraryofarts.core.designsystem.component.SoftBackdrop
 import org.libraryofarts.core.designsystem.haptic.rememberLibraryHaptics
@@ -66,8 +68,10 @@ fun HomeRoute(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val refreshing by viewModel.refreshing.collectAsStateWithLifecycle()
     HomeScreen(
         state = state,
+        refreshing = refreshing,
         onArtworkClick = { artwork -> viewModel.recordDailyView(); onArtworkClick(artwork.id) },
         onSave = viewModel::toggleSave,
         onRefresh = viewModel::refresh,
@@ -77,9 +81,11 @@ fun HomeRoute(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     state: HomeUiState,
+    refreshing: Boolean,
     onArtworkClick: (Artwork) -> Unit,
     onSave: (Artwork) -> Unit,
     onRefresh: () -> Unit,
@@ -97,6 +103,11 @@ fun HomeScreen(
             if (state.loading && state.content == null) {
                 LoadingPane(label = "Opening the gallery…")
             } else {
+                PullToRefreshBox(
+                    isRefreshing = refreshing,
+                    onRefresh = { haptics.tick(); onRefresh() },
+                    modifier = Modifier.fillMaxSize(),
+                ) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(bottom = 120.dp),
@@ -105,7 +116,6 @@ fun HomeScreen(
                         Masthead(
                             streak = state.content?.streak?.currentStreak ?: 0,
                             onOpenLibrary = { haptics.tick(); onOpenLibrary() },
-                            onRefresh = { haptics.tick(); onRefresh() },
                         )
                     }
 
@@ -160,6 +170,7 @@ fun HomeScreen(
                         }
                     }
                 }
+                }
             }
             SnackbarHost(snackbar, modifier = Modifier.align(Alignment.BottomCenter))
         }
@@ -167,7 +178,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun Masthead(streak: Int, onOpenLibrary: () -> Unit, onRefresh: () -> Unit) {
+private fun Masthead(streak: Int, onOpenLibrary: () -> Unit) {
     val today = remember {
         LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, d MMMM"))
     }
@@ -221,9 +232,12 @@ private fun Masthead(streak: Int, onOpenLibrary: () -> Unit, onRefresh: () -> Un
                     )
                     Spacer(Modifier.width(6.dp))
                 }
-                SquareIconButton(Icons.Default.MenuBook, "Open your library", onOpenLibrary)
-                Spacer(Modifier.width(6.dp))
-                SquareIconButton(Icons.Default.Refresh, "Refresh the gallery", onRefresh)
+                LibraryIconButton(
+                    icon = Icons.Default.MenuBook,
+                    description = "Open your library",
+                    onClick = onOpenLibrary,
+                    size = 40.dp,
+                )
             }
         }
         Spacer(Modifier.height(14.dp))
@@ -232,23 +246,6 @@ private fun Masthead(streak: Int, onOpenLibrary: () -> Unit, onRefresh: () -> Un
             thickness = 1.dp,
             color = MaterialTheme.colorScheme.onBackground,
         )
-    }
-}
-
-@Composable
-private fun SquareIconButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    description: String,
-    onClick: () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .size(34.dp)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(1.dp))
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(icon, contentDescription = description, modifier = Modifier.size(17.dp), tint = MaterialTheme.colorScheme.onSurface)
     }
 }
 

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -129,6 +130,7 @@ fun LibraryPill(
     val fg = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
     Box(
         modifier = modifier
+            .heightIn(min = 34.dp)
             .clip(RoundedCornerShape(2.dp))
             .background(bg)
             .border(
@@ -137,7 +139,7 @@ fun LibraryPill(
                 RoundedCornerShape(2.dp),
             )
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(horizontal = 11.dp, vertical = 7.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp),
     ) {
         Text(
             text = text,
@@ -199,6 +201,7 @@ fun ArtButton(
     val fg = if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
     Row(
         modifier = modifier
+            .heightIn(min = 44.dp)
             .clip(RoundedCornerShape(2.dp))
             .background(bg)
             .border(
@@ -207,7 +210,7 @@ fun ArtButton(
                 RoundedCornerShape(2.dp),
             )
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 11.dp),
+            .padding(horizontal = 18.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (icon != null) {
@@ -218,6 +221,39 @@ fun ArtButton(
             label.uppercase(),
             style = MaterialTheme.typography.labelSmall,
             color = fg,
+        )
+    }
+}
+
+
+@Composable
+fun LibraryIconButton(
+    icon: ImageVector,
+    description: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    selected: Boolean = false,
+    size: Dp = 44.dp,
+) {
+    val tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+    Box(
+        modifier = modifier
+            .size(size)
+            .clip(RoundedCornerShape(1.dp))
+            .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
+            .border(
+                1.dp,
+                if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                RoundedCornerShape(1.dp),
+            )
+            .clickable(role = Role.Button, onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = description,
+            tint = if (selected) MaterialTheme.colorScheme.onPrimary else tint,
+            modifier = Modifier.size(18.dp),
         )
     }
 }

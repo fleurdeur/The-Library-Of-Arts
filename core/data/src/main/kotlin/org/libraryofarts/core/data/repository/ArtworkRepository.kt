@@ -80,10 +80,10 @@ class ArtworkRepository @Inject constructor(
         return result.artworks.size
     }
 
-    suspend fun refreshHighlights(): Int {
+    suspend fun refreshHighlights(force: Boolean = false): Int {
         val now = System.currentTimeMillis()
         val last = refreshPrefs.getLong("highlights_at", 0L)
-        if (now - last < HIGHLIGHT_COOLDOWN_MILLIS && artworkDao.count() > 0) return 0
+        if (!force && now - last < HIGHLIGHT_COOLDOWN_MILLIS && artworkDao.count() > 0) return 0
         val count = refreshFromNetwork("")
         if (count > 0) refreshPrefs.edit().putLong("highlights_at", now).apply()
         return count
