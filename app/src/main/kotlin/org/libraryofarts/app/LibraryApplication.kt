@@ -70,16 +70,17 @@ class LibraryApplication : Application(), Configuration.Provider, SingletonImage
         .retryOnConnectionFailure(true)
         .addInterceptor { chain ->
             val host = chain.request().url.host
-            val agent = if (host.endsWith("artic.edu")) {
-                "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36"
+            val builder = chain.request().newBuilder()
+            if (host.endsWith("artic.edu")) {
+                // The AIC edge checks the referer, not just the agent.
+                builder
+                    .header("User-Agent", "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36")
+                    .header("Referer", "https://www.artic.edu/")
+                    .header("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
             } else {
-                "TheGreatLibraryOfArts/1.0 (open-access art companion)"
+                builder.header("User-Agent", "TheGreatLibraryOfArts/1.0 (open-access art companion)")
             }
-            chain.proceed(
-                chain.request().newBuilder()
-                    .header("User-Agent", agent)
-                    .build(),
-            )
+            chain.proceed(builder.build())
         }
         .build()
 

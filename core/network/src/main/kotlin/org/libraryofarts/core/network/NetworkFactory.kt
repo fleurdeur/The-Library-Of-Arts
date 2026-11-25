@@ -25,17 +25,20 @@ object NetworkFactory {
         .followRedirects(true)
         .addInterceptor { chain ->
             val host = chain.request().url.host
-            val agent = if (host.endsWith("artic.edu") || host.endsWith("artsandculture.google.com")) {
-                // These two hosts challenge non-browser agents at the edge.
-                "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36"
+            val builder = chain.request().newBuilder()
+            if (host.endsWith("artic.edu") || host.endsWith("artsandculture.google.com")) {
+                // Both hosts challenge requests that don't look like a page the
+                // user opened; the referer is what their edge actually checks.
+                builder
+                    .header("User-Agent", "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36")
+                    .header("Referer", "https://$host/")
+                    .header("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8,application/json;q=0.9")
             } else {
-                "TheGreatLibraryOfArts/1.0 (open-access art companion)"
+                builder
+                    .header("User-Agent", "TheGreatLibraryOfArts/1.0 (open-access art companion)")
+                    .header("Accept", "application/json, image/*")
             }
-            val request = chain.request().newBuilder()
-                .header("User-Agent", agent)
-                .header("Accept", "application/json, image/*")
-                .build()
-            chain.proceed(request)
+            chain.proceed(builder.build())
         }
         .build()
 
