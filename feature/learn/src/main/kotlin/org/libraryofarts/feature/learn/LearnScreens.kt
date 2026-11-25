@@ -206,7 +206,7 @@ fun LearnRoute(
                             }
                             Spacer(Modifier.height(12.dp))
                             Text(
-                                "Cards are generated from works in your library. Ratings adjust the interval; difficult cards come back sooner without penalty.",
+                                "Cards come from your library. Ratings set the interval.",
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )

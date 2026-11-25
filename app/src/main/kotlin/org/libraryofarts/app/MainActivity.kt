@@ -87,6 +87,7 @@ import org.libraryofarts.feature.games.MoodRoute
 import org.libraryofarts.feature.games.QuizRoute
 import org.libraryofarts.feature.games.ScanRoute
 import org.libraryofarts.feature.home.HomeRoute
+import org.libraryofarts.feature.home.ReelsRoute
 import org.libraryofarts.feature.journal.JournalRoute
 import org.libraryofarts.feature.learn.ArtistRoute
 import org.libraryofarts.feature.learn.FlashcardsRoute
@@ -116,6 +117,7 @@ object Route {
     const val MOOD = "mood"
     const val SCAN = "scan"
     const val KIDS = "kids"
+    const val REELS = "reels"
     const val AR = "ar/{id}"
 
     fun artwork(id: String) = "artwork/$id"
@@ -219,6 +221,7 @@ private fun LibraryApp(prefs: UserPreferences) {
                         onOpenTasteProfile = { nav.navigate(Route.TASTE) },
                         onOpenExplore = { navigateTop(nav, Route.EXPLORE) },
                         onOpenLibrary = { showLibrary = true },
+                        onOpenReels = { nav.navigate(Route.REELS) },
                     )
                 }
                 composable(
@@ -354,6 +357,12 @@ private fun LibraryApp(prefs: UserPreferences) {
                     deepLinks = listOf(navDeepLink { uriPattern = "libraryofarts://scan" }),
                 ) {
                     ScanRoute(
+                        onBack = { nav.popBackStack() },
+                        onOpenArtwork = { nav.navigate(Route.artwork(it)) },
+                    )
+                }
+                composable(Route.REELS) {
+                    ReelsRoute(
                         onBack = { nav.popBackStack() },
                         onOpenArtwork = { nav.navigate(Route.artwork(it)) },
                     )

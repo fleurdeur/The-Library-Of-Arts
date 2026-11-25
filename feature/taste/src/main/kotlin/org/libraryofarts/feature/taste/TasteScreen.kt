@@ -257,7 +257,7 @@ fun TasteProfileScreen(
         AlertDialog(
             onDismissRequest = { confirmReset = false },
             title = { Text("Reset your taste profile?") },
-            text = { Text("This clears only the viewing signals and interests used to personalise your feed. Your saved works and journal stay exactly as they are.") },
+            text = { Text("Clears only the signals used to personalise your feed. Saved works and journal are untouched.") },
             confirmButton = {
                 TextButton(onClick = { confirmReset = false; onReset() }) { Text("Reset learning") }
             },

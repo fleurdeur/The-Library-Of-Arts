@@ -56,6 +56,7 @@ data class ExploreUiState(
     val selectedMuseum: Museum? = null,
     val floorGuide: String? = null,
     val tourStops: List<MuseumAudioStop> = emptyList(),
+    val refreshing: Boolean = false,
     val museums: List<Museum> = MuseumCatalog.all,
     val artistConnections: List<ArtistConnection> = SeedLearning.artists.flatMap { it.connections }.distinctBy { it.fromArtist + it.toArtist },
     val onlineSources: Int = 0,
@@ -94,12 +95,14 @@ class ExploreViewModel @Inject constructor(
                     _ui.value = _ui.value.copy(savedIds = ids.toSet())
                 }
         }
+        // Search never touches the network on its own; Explore reads the
+        // library that Home already refreshed. A deliberate refresh stays
+        // available through refreshFromMuseums().
         viewModelScope.launch(AppDispatchers.io) {
             filter.map { it.query }
                 .distinctUntilChanged()
                 .debounce(550)
-                .collectLatest { query ->
-                    runCatching { artworks.get().refreshFromNetwork(query) }
+                .collectLatest {
                     runCatching {
                         _ui.value = _ui.value.copy(hiddenGems = artworks.get().hiddenGems(10))
                     }
@@ -121,6 +124,21 @@ class ExploreViewModel @Inject constructor(
 
     fun setQuery(value: String) {
         filter.value = filter.value.copy(query = value)
+    }
+
+    /** Explicit, user-requested sweep of the keyless museum APIs. */
+    fun refreshFromMuseums() {
+        if (_ui.value.refreshing) return
+        _ui.value = _ui.value.copy(refreshing = true)
+        viewModelScope.launch(AppDispatchers.io) {
+            runCatching { artworks.get().refreshHighlights(force = true) }
+            runCatching {
+                _ui.value = _ui.value.copy(
+                    refreshing = false,
+                    hiddenGems = artworks.get().hiddenGems(10),
+                )
+            }.onFailure { _ui.value = _ui.value.copy(refreshing = false) }
+        }
     }
 
     fun toggleGenre(value: String) { filter.value = filter.value.toggleGenre(value) }

@@ -103,10 +103,12 @@ fun ArtworkRoute(
     var showJournalDialog by remember { mutableStateOf(false) }
     var showSlowLooking by remember { mutableStateOf(false) }
     var showFrame by remember { mutableStateOf(false) }
+    var wallpaperResult by remember { mutableStateOf<Boolean?>(null) }
     var showScale by remember { mutableStateOf(false) }
     var showShare by remember { mutableStateOf(false) }
     var showAnnotations by remember { mutableStateOf(false) }
     var showTechnicalStudy by remember { mutableStateOf(false) }
+    var showWallpaperDialog by remember { mutableStateOf(false) }
     var layerDialog by remember { mutableStateOf<org.libraryofarts.core.model.ArtworkLayer?>(null) }
 
     DisposableEffect(Unit) {
@@ -159,17 +161,7 @@ fun ArtworkRoute(
                     onToggleBrushstroke = viewModel::toggleBrushstroke,
                     onToggleAnnotations = { showAnnotations = !showAnnotations },
                     onLayer = { layerDialog = it },
-                    onWallpaper = {
-                        scope.launch {
-                            val ok = withContext(Dispatchers.IO) {
-                                runCatching {
-                                    val url = state.artwork!!.image.fullUrl
-                                    WallpaperManager.getInstance(context).setStream(java.net.URL(url).openStream())
-                                }.isSuccess
-                            }
-                            snackbar.showSnackbar(if (ok) "Wallpaper set." else "Wallpaper could not be set on this device.")
-                        }
-                    },
+                    onWallpaper = { showWallpaperDialog = true },
                     onOpenArtist = onOpenArtist,
                     onSubmitInterpretation = viewModel::compareInterpretation,
                     onSaveInterpretation = { text, mood, tags ->
@@ -208,6 +200,16 @@ fun ArtworkRoute(
     }
     layerDialog?.let { layer ->
         LayerDialog(layer, onDismiss = { layerDialog = null })
+    }
+    if (showWallpaperDialog && artwork != null) {
+        WallpaperDialog(
+            artwork = artwork,
+            onDismiss = { showWallpaperDialog = false },
+            onDone = { ok ->
+                showWallpaperDialog = false
+                scope.launch { snackbar.showSnackbar(if (ok) "Wallpaper set." else "The wallpaper could not be set on this device.") }
+            },
+        )
     }
     if (showTechnicalStudy && artwork != null) {
         TechnicalStudyDialog(

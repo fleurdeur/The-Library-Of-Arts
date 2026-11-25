@@ -28,6 +28,9 @@ interface ArtworkDao {
     @Query("SELECT COUNT(*) FROM artworks")
     suspend fun count(): Int
 
+    @Query("SELECT * FROM artworks WHERE packId = :packId")
+    suspend fun byPack(packId: String): List<ArtworkEntity>
+
     @Query("SELECT * FROM artworks WHERE artistName = :artist ORDER BY yearStart")
     suspend fun byArtist(artist: String): List<ArtworkEntity>
 

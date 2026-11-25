@@ -135,9 +135,20 @@ object MuseumCatalog {
         website = "https://artsandculture.google.com",
     )
 
+    val smk = Museum(
+        id = "smk",
+        name = "Statens Museum for Kunst",
+        shortName = "SMK",
+        city = "Copenhagen",
+        country = "Denmark",
+        latitude = 55.6875,
+        longitude = 12.5714,
+        website = "https://www.smk.dk",
+    )
+
     val all: List<Museum> = listOf(
         met, aic, rijksmuseum, cleveland, smithsonian, nga,
-        europeana, harvard, parisMusees, getty, wikimedia, googleArts,
+        europeana, harvard, parisMusees, getty, wikimedia, googleArts, smk,
     )
 
     fun byId(id: String): Museum = all.firstOrNull { it.id == id } ?: europeana
@@ -154,6 +165,7 @@ object MuseumCatalog {
         ArtSource.GETTY -> getty
         ArtSource.WIKIMEDIA -> wikimedia
         ArtSource.GOOGLE_ARTS -> googleArts
+        ArtSource.SMK -> smk
         ArtSource.OFFLINE_PACK -> met
     }
 }

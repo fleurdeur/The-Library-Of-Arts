@@ -16,37 +16,50 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.allowHardware
+import kotlinx.coroutines.launch
 import org.libraryofarts.core.data.export.ShareFont
 import org.libraryofarts.core.data.export.ShareLayout
 import org.libraryofarts.core.data.export.ShareRatio
@@ -165,7 +178,7 @@ fun FramePreviewDialog(artwork: Artwork, onDismiss: () -> Unit) {
             ) {
                 Text("Frame Preview", style = MaterialTheme.typography.titleLarge)
                 Text(
-                    "A wall-scale mock-up. Colours are approximate; your screen is not a gallery light.",
+                    "A wall-scale mock-up. Colours are approximate.",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -282,23 +295,69 @@ fun ScaleCheckDialog(artwork: Artwork, onDismiss: () -> Unit) {
 @Composable
 private fun HumanSilhouette(modifier: Modifier = Modifier) {
     androidx.compose.foundation.Canvas(modifier = modifier) {
-        val paint = androidx.compose.ui.graphics.Paint()
         val w = size.width
         val h = size.height
-        val color = Color(0xFF5B4636)
-        drawCircle(color = color, radius = w * 0.18f, center = androidx.compose.ui.geometry.Offset(w / 2, h * 0.1f))
+        val body = Color(0xFF4E4033)
+        val outline = Color(0xFF2E2620)
+
+        // Head: slightly oval, tilted none, natural proportion (head ≈ h/7.5).
+        val headRadius = w * 0.155f
+        val headCenter = androidx.compose.ui.geometry.Offset(w * 0.5f, headRadius + h * 0.022f)
+        drawOval(color = body, topLeft = Offset(headCenter.x - headRadius * 0.92f, headCenter.y - headRadius), size = Size(headRadius * 1.84f, headRadius * 2f))
+
+        // Neck.
         drawRoundRect(
-            color = color,
-            topLeft = androidx.compose.ui.geometry.Offset(w * 0.30f, h * 0.17f),
-            size = androidx.compose.ui.geometry.Size(w * 0.40f, h * 0.42f),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(w * 0.15f),
+            color = body,
+            topLeft = Offset(w * 0.44f, headCenter.y + headRadius * 0.85f),
+            size = Size(w * 0.12f, h * 0.035f),
+            cornerRadius = CornerRadius(w * 0.05f),
         )
-        drawRoundRect(
-            color = color,
-            topLeft = androidx.compose.ui.geometry.Offset(w * 0.38f, h * 0.56f),
-            size = androidx.compose.ui.geometry.Size(w * 0.24f, h * 0.42f),
-            cornerRadius = androidx.compose.ui.geometry.CornerRadius(w * 0.10f),
-        )
+
+        // Shoulders and torso in one soft path.
+        val torso = Path().apply {
+            moveTo(w * 0.50f, h * 0.135f)
+            // left shoulder
+            cubicTo(w * 0.32f, h * 0.150f, w * 0.20f, h * 0.20f, w * 0.21f, h * 0.30f)
+            // left arm
+            cubicTo(w * 0.20f, h * 0.40f, w * 0.24f, h * 0.46f, w * 0.28f, h * 0.505f)
+            lineTo(w * 0.36f, h * 0.49f)
+            cubicTo(w * 0.33f, h * 0.42f, w * 0.34f, h * 0.36f, w * 0.36f, h * 0.315f)
+            // waist and hip
+            cubicTo(w * 0.355f, h * 0.40f, w * 0.35f, h * 0.50f, w * 0.35f, h * 0.56f)
+            lineTo(w * 0.65f, h * 0.56f)
+            cubicTo(w * 0.65f, h * 0.50f, w * 0.645f, h * 0.40f, w * 0.64f, h * 0.315f)
+            cubicTo(w * 0.66f, h * 0.36f, w * 0.67f, h * 0.42f, w * 0.64f, h * 0.49f)
+            lineTo(w * 0.72f, h * 0.505f)
+            cubicTo(w * 0.76f, h * 0.46f, w * 0.80f, h * 0.40f, w * 0.79f, h * 0.30f)
+            cubicTo(w * 0.80f, h * 0.20f, w * 0.68f, h * 0.150f, w * 0.50f, h * 0.135f)
+            close()
+        }
+        drawPath(torso, body)
+        drawPath(torso, outline, style = Stroke(width = w * 0.018f))
+
+        // Legs with a small gap, natural stance.
+        val leftLeg = Path().apply {
+            moveTo(w * 0.35f, h * 0.555f)
+            cubicTo(w * 0.345f, h * 0.68f, w * 0.36f, h * 0.82f, w * 0.40f, h * 0.965f)
+            lineTo(w * 0.475f, h * 0.965f)
+            cubicTo(w * 0.47f, h * 0.82f, w * 0.46f, h * 0.68f, w * 0.465f, h * 0.555f)
+            close()
+        }
+        val rightLeg = Path().apply {
+            moveTo(w * 0.535f, h * 0.555f)
+            cubicTo(w * 0.54f, h * 0.68f, w * 0.53f, h * 0.82f, w * 0.525f, h * 0.965f)
+            lineTo(w * 0.60f, h * 0.965f)
+            cubicTo(w * 0.64f, h * 0.82f, w * 0.655f, h * 0.68f, w * 0.65f, h * 0.555f)
+            close()
+        }
+        drawPath(leftLeg, body)
+        drawPath(rightLeg, body)
+        drawPath(leftLeg, outline, style = Stroke(width = w * 0.016f))
+        drawPath(rightLeg, outline, style = Stroke(width = w * 0.016f))
+
+        // Feet.
+        drawRoundRect(body, Offset(w * 0.385f, h * 0.962f), Size(w * 0.10f, h * 0.02f), CornerRadius(w * 0.04f))
+        drawRoundRect(body, Offset(w * 0.515f, h * 0.962f), Size(w * 0.10f, h * 0.02f), CornerRadius(w * 0.04f))
     }
 }
 
@@ -471,6 +530,189 @@ private fun org.libraryofarts.core.model.StudyLens.matrix(): ColorMatrix? = when
     )
 }
 
+private enum class WallpaperScreen(val label: String, val flags: Int) {
+    HOME("Home screen", android.app.WallpaperManager.FLAG_SYSTEM),
+    LOCK("Lock screen", android.app.WallpaperManager.FLAG_LOCK),
+    BOTH("Both", android.app.WallpaperManager.FLAG_SYSTEM or android.app.WallpaperManager.FLAG_LOCK),
+}
+
+private enum class WallpaperFit(val label: String) {
+    FIT("Fit"),
+    FILL("Fill"),
+}
+
+@Composable
+fun WallpaperDialog(
+    artwork: Artwork,
+    onDismiss: () -> Unit,
+    onDone: (Boolean) -> Unit,
+) {
+    var screen by remember { mutableStateOf(WallpaperScreen.HOME) }
+    var fit by remember { mutableStateOf(WallpaperFit.FILL) }
+    var dim by remember { mutableFloatStateOf(0.15f) }
+    var working by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+
+    Dialog(onDismissRequest = { if (!working) onDismiss() }) {
+        Surface(
+            shape = RoundedCornerShape(1.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        ) {
+            Column(modifier = Modifier.padding(18.dp)) {
+                Text(
+                    "WALLPAPER",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(artwork.title, style = MaterialTheme.typography.titleLarge, maxLines = 2)
+                Spacer(Modifier.height(12.dp))
+
+                Text("Screen", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(4.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    WallpaperScreen.entries.forEach { option ->
+                        LibraryPill(option.label, selected = screen == option, onClick = { screen = option })
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+
+                Text("Framing", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(4.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    WallpaperFit.entries.forEach { option ->
+                        LibraryPill(option.label, selected = fit == option, onClick = { fit = option })
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+
+                Text(
+                    "Vignette · ${(dim * 100).roundToInt()}%",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Slider(
+                    value = dim,
+                    onValueChange = { dim = it },
+                    valueRange = 0f..0.6f,
+                    enabled = !working,
+                )
+                Text(
+                    "A soft edge keeps the plate visible behind icons and the clock.",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(12.dp))
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    ArtButton("Cancel", onClick = onDismiss, filled = false)
+                    Spacer(Modifier.width(8.dp))
+                    ArtButton(
+                        label = if (working) "Setting…" else "Set wallpaper",
+                        onClick = {
+                            working = true
+                            setWallpaper(
+                                context = context,
+                                configuration = configuration,
+                                artwork = artwork,
+                                screen = screen,
+                                fit = fit,
+                                dim = dim,
+                            ) { success ->
+                                working = false
+                                if (success) onDismiss()
+                                onDone(success)
+                            }
+                        },
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun setWallpaper(
+    context: android.content.Context,
+    configuration: android.content.res.Configuration,
+    artwork: Artwork,
+    screen: WallpaperScreen,
+    fit: WallpaperFit,
+    dim: Float,
+    onDone: (Boolean) -> Unit,
+) {
+    val loader = coil3.SingletonImageLoader.get(context)
+    val model = artwork.image.localPath?.let { java.io.File(it) } ?: artwork.image.fullUrl.ifBlank { artwork.image.thumbnailUrl }
+    val widthPx = (configuration.screenWidthDp * 2).coerceAtLeast(720)
+    val heightPx = (configuration.screenHeightDp * 2).coerceAtLeast(1280)
+    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+        val success = runCatching {
+            val request = ImageRequest.Builder(context)
+                .data(model)
+                .allowHardware(false)
+                .size(widthPx, heightPx)
+                .build()
+            val result = loader.execute(request)
+            val image = (result as? coil3.request.SuccessResult)?.image
+                ?: throw IllegalStateException("no image")
+            val source = (image as? coil3.BitmapImage)?.bitmap ?: image.toBitmap()
+            val manager = android.app.WallpaperManager.getInstance(context)
+            val bitmap = composeWallpaper(source, widthPx, heightPx, fit, dim)
+            manager.setBitmap(bitmap, null, true, screen.flags)
+            bitmap.recycle()
+        }.isSuccess
+        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { onDone(success) }
+    }
+}
+
+private fun composeWallpaper(
+    source: android.graphics.Bitmap,
+    width: Int,
+    height: Int,
+    fit: WallpaperFit,
+    dim: Float,
+): android.graphics.Bitmap {
+    val out = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(out)
+    canvas.drawColor(android.graphics.Color.rgb(23, 21, 18))
+    val paint = android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG).apply { isAntiAlias = true }
+    val scale = if (fit == WallpaperFit.FILL) {
+        maxOf(width.toFloat() / source.width, height.toFloat() / source.height)
+    } else {
+        minOf(width.toFloat() / source.width, height.toFloat() / source.height)
+    }
+    val drawWidth = source.width * scale
+    val drawHeight = source.height * scale
+    val left = (width - drawWidth) / 2f
+    val top = (height - drawHeight) / 2f
+    canvas.drawBitmap(source, null, android.graphics.RectF(left, top, left + drawWidth, top + drawHeight), paint)
+    if (dim > 0.01f) {
+        paint.shader = null
+        paint.color = android.graphics.Color.argb((dim * 255).toInt(), 10, 9, 8)
+        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paint)
+    }
+    return out
+}
+
+private fun coil3.Image.toBitmap(): android.graphics.Bitmap {
+    val width = this.width.takeIf { it > 0 } ?: 720
+    val height = this.height.takeIf { it > 0 } ?: 1280
+    val bmp = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(bmp)
+    draw(canvas)
+    return bmp
+}
+
+private fun android.graphics.drawable.Drawable.toBitmap(): android.graphics.Bitmap {
+    val width = intrinsicWidth.takeIf { it > 0 } ?: 720
+    val height = intrinsicHeight.takeIf { it > 0 } ?: 1280
+    val bmp = android.graphics.Bitmap.createBitmap(width, height, android.graphics.Bitmap.Config.ARGB_8888)
+    val canvas = android.graphics.Canvas(bmp)
+    setBounds(0, 0, width, height)
+    draw(canvas)
+    return bmp
+}
+
 @Composable
 fun TechnicalStudyDialog(
     artwork: Artwork,
@@ -532,7 +774,7 @@ fun TechnicalStudyDialog(
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "These are interpretive study lenses, not museum imaging. Real X-ray, infrared and restoration plates appear when a source supplies them.",
+                    "Interpretive lenses, not museum imaging. Real study plates appear when a source supplies them.",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

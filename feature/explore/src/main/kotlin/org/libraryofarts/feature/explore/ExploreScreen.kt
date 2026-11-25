@@ -34,6 +34,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
@@ -111,6 +112,7 @@ fun ExploreRoute(
         state = state,
         lazyResults = lazyResults,
         onMode = viewModel::setMode,
+        onRefreshMuseums = viewModel::refreshFromMuseums,
         onQuery = viewModel::setQuery,
         onToggleGenre = viewModel::toggleGenre,
         onTogglePeriod = viewModel::togglePeriod,
@@ -172,6 +174,7 @@ private fun ExploreScreen(
     state: ExploreUiState,
     lazyResults: androidx.paging.compose.LazyPagingItems<Artwork>,
     onMode: (ExploreMode) -> Unit,
+    onRefreshMuseums: () -> Unit,
     onQuery: (String) -> Unit,
     onToggleGenre: (String) -> Unit,
     onTogglePeriod: (String) -> Unit,
@@ -235,6 +238,13 @@ private fun ExploreScreen(
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                     )
                     Spacer(Modifier.width(8.dp))
+                    LibraryIconButton(
+                        icon = Icons.Default.Refresh,
+                        description = "Refresh from the museums",
+                        onClick = onRefreshMuseums,
+                        size = 56.dp,
+                    )
+                    Spacer(Modifier.width(6.dp))
                     LibraryIconButton(
                         icon = Icons.Default.Tune,
                         description = "Filters",
@@ -786,7 +796,7 @@ private fun TimeMachine(
             Column(modifier = Modifier.padding(20.dp)) {
                 Text("Travel by century", style = MaterialTheme.typography.titleLarge)
                 Text(
-                    "Choose a century to walk through the collection in chronological order. Every work carries its date, even when the exact year is uncertain.",
+                    "Walk the collection century by century, in order.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -910,7 +920,7 @@ private fun MuseumVisit(
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
         Text("Museum Visit", style = MaterialTheme.typography.titleLarge)
         Text(
-            "Find partner museums near you, then download a floor guide before you lose signal. Location is used once, on this screen, and never stored.",
+            "Find museums nearby and download a floor guide. Location is used once and never stored.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

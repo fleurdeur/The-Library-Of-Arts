@@ -6,11 +6,18 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import org.libraryofarts.core.data.mapper.ArtworkJson
+import org.libraryofarts.core.data.mapper.toArtwork
+import org.libraryofarts.core.data.mapper.toEntity
 import org.libraryofarts.core.data.pack.PackDownloader
 import org.libraryofarts.core.data.pack.PackInstaller
 import org.libraryofarts.core.database.ArtworkDao
@@ -31,11 +38,45 @@ class PackRepository @Inject constructor(
     private val installer: PackInstaller,
     private val trust: PackTrust,
 ) {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val _progress = MutableStateFlow<Map<String, PackDownloadProgress>>(emptyMap())
     val progress: StateFlow<Map<String, PackDownloadProgress>> = _progress.asStateFlow()
 
+    init {
+        scope.launch { runCatching { relinkImages() } }
+    }
+
     val installed: Flow<List<InstalledPack>> = packDao.observeInstalled().map { list ->
         list.map { it.toModel() }.distinctBy { it.id }
+    }
+
+    /** Re-links pack images that were installed before the matching fix. */
+    suspend fun relinkImages() {
+        runCatching {
+            val installed = packDao.observeInstalled().first()
+            for (entity in installed) {
+                val dir = File(entity.localPath)
+                if (!dir.isDirectory) continue
+                val images = File(dir, "images").listFiles()?.filter { it.isFile } ?: continue
+                if (images.isEmpty()) continue
+                val byStem = images.associateBy { it.nameWithoutExtension }
+                val artworks = artworkDao.byPack(entity.id).mapNotNull { it.toArtwork() }
+                var changed = 0
+                for (artwork in artworks) {
+                    if (artwork.image.localPath != null && File(artwork.image.localPath).exists()) continue
+                    val tail = artwork.id.substringAfter(':', artwork.sourceId)
+                    val match = byStem[artwork.sourceId] ?: byStem[tail]
+                        ?: File(dir, "images/${artwork.sourceId}.jpg").takeIf { it.exists() }
+                        ?: File(dir, "images/$tail.jpg").takeIf { it.exists() }
+                        ?: continue
+                    val fixed = artwork.copy(
+                        image = artwork.image.copy(localPath = match.absolutePath),
+                    )
+                    artworkDao.upsert(fixed.toEntity())
+                    changed++
+                }
+            }
+        }
     }
 
     val totalInstalledBytes: Flow<Long> = packDao.observeTotalBytes()

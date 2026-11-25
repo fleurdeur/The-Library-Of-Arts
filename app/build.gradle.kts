@@ -29,8 +29,8 @@ android {
         applicationId = "org.libraryofarts.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 7
-        versionName = "1.0.6"
+        versionCode = 8
+        versionName = "1.0.7"
         resourceConfigurations += listOf("en", "fr", "de", "es", "it", "pt", "ar", "he", "ja", "ko", "zh")
     }
 

@@ -33,8 +33,8 @@ class Narrator @Inject constructor(
             val engine = tts ?: return@TextToSpeech
             runCatching {
                 engine.language = Locale.US
-                engine.setSpeechRate(0.91f)
-                engine.setPitch(0.98f)
+                engine.setSpeechRate(0.86f)
+                engine.setPitch(1.0f)
                 engine.setAudioAttributes(
                     AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
@@ -60,20 +60,30 @@ class Narrator @Inject constructor(
                 val name = voice.name.lowercase(Locale.US)
                 val quality = voice.quality.coerceAtLeast(0)
                 val latency = voice.latency.coerceAtLeast(0)
-                val premium = when {
-                    name.contains("neural") || name.contains("wavenet") -> 42
-                    name.contains("network") || name.contains("enhanced") -> 30
-                    name.contains("google") -> 18
-                    name.contains("samsung") -> 12
+                // Sound quality first: natural neural voices win even when they
+                // need a network connection; quality then engine then region.
+                val natural = when {
+                    name.contains("neural") -> 220
+                    name.contains("journey") || name.contains("studio") -> 200
+                    name.contains("wavenet") || name.contains("chirp") -> 190
+                    name.contains("network") || name.contains("enhanced") || name.contains("natural") -> 160
+                    name.contains("google") -> 80
+                    name.contains("samsung") -> 40
                     else -> 0
                 }
+                val qualityScore = quality * 60
                 val region = when (voice.locale.country.uppercase(Locale.US)) {
-                    "US" -> 14
+                    "US" -> 12
                     "GB" -> 10
                     "AU", "CA", "IE", "NZ" -> 6
                     else -> 0
                 }
-                voice to (premium + quality * 10 + region - latency)
+                val latencyPenalty = when {
+                    latency <= Voice.LATENCY_NORMAL -> 0
+                    latency <= Voice.LATENCY_HIGH -> 4
+                    else -> 12
+                }
+                voice to (natural + qualityScore + region - latencyPenalty)
             }
             .maxByOrNull { it.second }
             ?.first

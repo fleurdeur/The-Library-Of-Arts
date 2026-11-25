@@ -69,9 +69,15 @@ class LibraryApplication : Application(), Configuration.Provider, SingletonImage
         .readTimeout(java.util.concurrent.TimeUnit.SECONDS.toMillis(20), java.util.concurrent.TimeUnit.MILLISECONDS)
         .retryOnConnectionFailure(true)
         .addInterceptor { chain ->
+            val host = chain.request().url.host
+            val agent = if (host.endsWith("artic.edu")) {
+                "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36"
+            } else {
+                "TheGreatLibraryOfArts/1.0 (open-access art companion)"
+            }
             chain.proceed(
                 chain.request().newBuilder()
-                    .header("User-Agent", "TheGreatLibraryOfArts/1.0 (open-access art companion)")
+                    .header("User-Agent", agent)
                     .build(),
             )
         }

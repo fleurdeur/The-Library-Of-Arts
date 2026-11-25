@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.SmartDisplay
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -65,6 +66,7 @@ fun HomeRoute(
     onOpenTasteProfile: () -> Unit,
     onOpenExplore: () -> Unit,
     onOpenLibrary: () -> Unit,
+    onOpenReels: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -78,6 +80,7 @@ fun HomeRoute(
         onOpenTaste = onOpenTasteProfile,
         onOpenExplore = onOpenExplore,
         onOpenLibrary = onOpenLibrary,
+        onOpenReels = onOpenReels,
     )
 }
 
@@ -92,6 +95,7 @@ fun HomeScreen(
     onOpenTaste: () -> Unit,
     onOpenExplore: () -> Unit,
     onOpenLibrary: () -> Unit,
+    onOpenReels: () -> Unit = {},
 ) {
     val haptics = rememberLibraryHaptics()
     val snackbar = remember { SnackbarHostState() }
@@ -116,6 +120,7 @@ fun HomeScreen(
                         Masthead(
                             streak = state.content?.streak?.currentStreak ?: 0,
                             onOpenLibrary = { haptics.tick(); onOpenLibrary() },
+                            onOpenReels = { haptics.tick(); onOpenReels() },
                         )
                     }
 
@@ -178,7 +183,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun Masthead(streak: Int, onOpenLibrary: () -> Unit) {
+private fun Masthead(streak: Int, onOpenLibrary: () -> Unit, onOpenReels: () -> Unit = {}) {
     val today = remember {
         LocalDate.now().format(DateTimeFormatter.ofPattern("EEEE, d MMMM"))
     }
@@ -232,6 +237,13 @@ private fun Masthead(streak: Int, onOpenLibrary: () -> Unit) {
                     )
                     Spacer(Modifier.width(6.dp))
                 }
+                LibraryIconButton(
+                    icon = Icons.Default.SmartDisplay,
+                    description = "Open the reels",
+                    onClick = onOpenReels,
+                    size = 40.dp,
+                )
+                Spacer(Modifier.width(6.dp))
                 LibraryIconButton(
                     icon = Icons.Default.MenuBook,
                     description = "Open your library",

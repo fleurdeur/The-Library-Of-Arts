@@ -244,7 +244,7 @@ fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
             }
             item("packs-note") {
                 Text(
-                    "Packs are verified with SHA-256 before any file is unpacked. Zip-slip paths are rejected. Archives are served from the project's public release downloads.",
+                    "Every pack is checksum-verified before unpacking.",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp),
@@ -297,7 +297,7 @@ fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
             item("backup") {
                 SettingsSection("Encrypted backup") {
                     Text(
-                        "Export a single encrypted file of your saved works, journal, collections and flashcards. The passphrase is never stored; without it the file cannot be read.",
+                        "Export one encrypted file of your library. The passphrase is never stored.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -311,7 +311,7 @@ fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
             item("privacy") {
                 SettingsSection("Privacy") {
                     Text(
-                        "No account. No advertising SDK. No analytics SDK. Crash reports are opt-in and contain no artwork, journal text or location.",
+                        "No account, no ads, no analytics. Crash reports are opt-in and carry nothing personal.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -432,7 +432,7 @@ fun SettingsRoute(viewModel: SettingsViewModel = hiltViewModel()) {
             title = { Text("Allow this install") },
             text = {
                 Text(
-                    "Android needs permission to install an update from the library. Open the system setting, allow installs from this app, then return here.",
+                    "Allow installs from this app once, then return here.",
                     style = MaterialTheme.typography.bodySmall,
                 )
             },

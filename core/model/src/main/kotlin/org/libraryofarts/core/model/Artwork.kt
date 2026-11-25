@@ -84,6 +84,7 @@ enum class ArtSource(val id: String, val label: String) {
     GETTY("getty", "The J. Paul Getty Museum"),
     WIKIMEDIA("wikimedia", "Wikimedia Commons"),
     GOOGLE_ARTS("google-arts", "Google Arts & Culture"),
+    SMK("smk", "Statens Museum for Kunst"),
     OFFLINE_PACK("pack", "Offline Art Pack");
 
     companion object {

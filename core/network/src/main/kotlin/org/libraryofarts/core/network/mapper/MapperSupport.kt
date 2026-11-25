@@ -142,6 +142,22 @@ internal object MapperSupport {
         museumOverride: org.libraryofarts.core.model.Museum? = null,
     ): Artwork {
         val genre = genreFor(genreRaw)
+        val derivedPeriod = periodFor(yearStart)
+        val museum = museumOverride ?: MuseumCatalog.bySource(source)
+        val filledDescription = description?.takeIf { it.isNotBlank() }
+            ?: buildString {
+                append(title)
+                if (artistName != null) append(" by ").append(artistName.trim())
+                if (yearStart != null) {
+                    append(" (").append(yearStart)
+                    if (yearEnd != null && yearEnd != yearStart) append("–").append(yearEnd)
+                    append(")")
+                }
+                medium?.let { append(". ").append(it) }
+                append(". Held at ").append(museum.name)
+                museum.city.takeIf { it.isNotBlank() && it != "Worldwide" }?.let { append(", ").append(it) }
+                append(".")
+            }
         return Artwork(
             id = artworkId(source, sourceId),
             source = source,
@@ -153,12 +169,12 @@ internal object MapperSupport {
             yearStart = yearStart,
             yearEnd = yearEnd,
             genre = genre,
-            period = periodFor(yearStart),
+            period = derivedPeriod,
             medium = medium,
             museum = museumOverride ?: MuseumCatalog.bySource(source),
             palette = paletteFor(title),
             image = image,
-            description = description,
+            description = filledDescription,
             license = license,
             provenance = provenance,
             tags = listOfNotNull(genre, periodFor(yearStart)),
