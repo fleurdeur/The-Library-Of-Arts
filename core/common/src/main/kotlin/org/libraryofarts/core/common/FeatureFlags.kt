@@ -25,8 +25,8 @@ data class FeatureFlags(
 object BuildInfo {
     const val APP_NAME = "The Great Library of Arts"
     const val PACKAGE_NAME = "org.libraryofarts.app"
-    const val VERSION_NAME = "1.0.9"
-    const val VERSION_CODE = 10
+    const val VERSION_NAME = "1.1.0"
+    const val VERSION_CODE = 11
     const val DEVELOPER = "fleurdeur"
     const val GITHUB_PROFILE = "https://github.com/fleurdeur"
     const val REPOSITORY = "https://github.com/fleurdeur/The-Library-Of-Arts"

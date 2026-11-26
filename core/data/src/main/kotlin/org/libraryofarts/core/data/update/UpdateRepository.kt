@@ -216,7 +216,18 @@ class UpdateRepository @Inject constructor(
                 .url(asset.url)
                 .header("Accept", "application/octet-stream")
                 .build()
-            val response = client.newCall(request).execute()
+            var response = client.newCall(request).execute()
+            if (response.code == 404) {
+                // A cached or mirrored asset may still carry the old name; try
+                // the other published spelling before giving up.
+                val alternate = alternateUrl(asset.url)
+                response.close()
+                response = if (alternate != null) {
+                    client.newCall(request.newBuilder().url(alternate).build()).execute()
+                } else {
+                    client.newCall(request).execute()
+                }
+            }
             response.use { res ->
                 if (!res.isSuccessful) throw IllegalStateException("The APK download returned ${res.code}.")
                 val body = res.body ?: throw IllegalStateException("The APK download was empty.")
@@ -335,7 +346,24 @@ class UpdateRepository @Inject constructor(
     private fun updateDir(): File = File(context.cacheDir, "updates").apply { mkdirs() }
 
     private fun readCache(): AppUpdate? = prefs.getString(KEY_CACHE, null)?.let {
-        runCatching { json.decodeFromString<AppUpdate>(it) }.getOrNull()
+        runCatching { json.decodeFromString<AppUpdate>(it) }.getOrNull()?.normalized()
+    }
+
+    /**
+     * Older builds generated `TheGreatLibraryOfArts-…` download names from the
+     * Atom fallback. Cached updates from those builds outlive an app update, so
+     * rewrite the legacy prefix before handing an asset to the downloader.
+     */
+    private fun AppUpdate.normalized(): AppUpdate {
+        if (assets.none { it.name.contains(LEGACY_PREFIX) || it.url.contains(LEGACY_PREFIX) }) return this
+        return copy(
+            assets = assets.map {
+                it.copy(
+                    name = it.name.replace(LEGACY_PREFIX, CURRENT_PREFIX),
+                    url = it.url.replace(LEGACY_PREFIX, CURRENT_PREFIX),
+                )
+            },
+        )
     }
 
     private fun AppUpdate.toCheck(currentVersion: String, fromCache: Boolean = false): UpdateCheck {
@@ -376,6 +404,12 @@ class UpdateRepository @Inject constructor(
             assets = mapped,
         )
     }
+
+    private fun alternateUrl(url: String): String? = when {
+        url.contains(LEGACY_PREFIX) -> url.replace(LEGACY_PREFIX, CURRENT_PREFIX)
+        url.contains(CURRENT_PREFIX) -> url.replace(CURRENT_PREFIX, LEGACY_PREFIX)
+        else -> null
+    }.takeIf { it != url }
 
     private fun sha256(file: File): String {
         val digest = MessageDigest.getInstance("SHA-256")
@@ -468,6 +502,8 @@ class UpdateRepository @Inject constructor(
         const val KEY_READY_VERSION = "ready_version"
         const val KEY_NOTIFIED = "last_notified_tag"
         val STABLE_TAG = Regex("""^v\d+\.\d+\.\d+$""")
+        const val LEGACY_PREFIX = "TheGreatLibraryOfArts-"
+        const val CURRENT_PREFIX = "The-Library-Of-Arts-"
     }
 }
 

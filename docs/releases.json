@@ -1,39 +1,73 @@
 {
   "latest": {
-    "version": "1.0.9",
-    "code": 10,
-    "tag": "v1.0.9",
+    "version": "1.1.0",
+    "code": 11,
+    "tag": "v1.1.0",
     "date": "2026-11-26",
-    "name": "The Great Library of Arts 1.0.9",
-    "notes": "Every game now plays the whole library - installed packs, browsed works and museum highlights - with a refresh button and live compare/kids/mood pools. In-app APK downloads no longer 404 (asset names now match the published files).",
+    "name": "The Great Library of Arts 1.1.0",
+    "notes": "Reels rebuilt to Instagram's layout: full-bleed plates, right action rail, creator and caption, spinning record, double-tap heart and tap-to-pause. Every reel is scored with public-domain early music from Wikimedia Commons, Openverse and the Internet Archive, with licence and source credits. In-app APK downloads no longer 404.",
     "assets": [
       {
-        "name": "The-Library-Of-Arts-1.0.9-universal.apk",
-        "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.0.9/The-Library-Of-Arts-1.0.9-universal.apk",
-        "size": 22918575,
-        "sha256": "5bc9a5d2e483f463d4033dab3f95da5748255818ece08019144939b2d9679fef"
+        "name": "The-Library-Of-Arts-1.1.0-universal.apk",
+        "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.1.0/The-Library-Of-Arts-1.1.0-universal.apk",
+        "size": 22951339,
+        "sha256": "53b1440b97f95b1c90493c57afbc84c4db4c4956becb71027599727a68f6cf14"
       },
       {
-        "name": "The-Library-Of-Arts-1.0.9-arm64-v8a.apk",
-        "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.0.9/The-Library-Of-Arts-1.0.9-arm64-v8a.apk",
-        "size": 16510712,
-        "sha256": "9e79939b3060b5a2a14dd8b787ac392c3aacf3032b3a7e2e72aed56ec154c57c"
+        "name": "The-Library-Of-Arts-1.1.0-arm64-v8a.apk",
+        "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.1.0/The-Library-Of-Arts-1.1.0-arm64-v8a.apk",
+        "size": 16543476,
+        "sha256": "0825fee19187cd0766185cf677bced3522ef2b9db445d4fa9adcda54c308a6ad"
       },
       {
-        "name": "The-Library-Of-Arts-1.0.9-armeabi-v7a.apk",
-        "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.0.9/The-Library-Of-Arts-1.0.9-armeabi-v7a.apk",
-        "size": 15395178,
-        "sha256": "f831d92f571f6c4ce07a7786294c14884389b6af06d76f77f71386f82c2dca89"
+        "name": "The-Library-Of-Arts-1.1.0-armeabi-v7a.apk",
+        "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.1.0/The-Library-Of-Arts-1.1.0-armeabi-v7a.apk",
+        "size": 15427942,
+        "sha256": "5659c59da82d1f42a72e5f4662907d89f3ca82717d3cd7552f53b53647e846aa"
       },
       {
-        "name": "The-Library-Of-Arts-1.0.9-wear.apk",
-        "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.0.9/The-Library-Of-Arts-1.0.9-wear.apk",
-        "size": 8963555,
-        "sha256": "3a3f227a7174c40d14ca4f229c5946fee7fe3e2ba6b5e5f58e9cbdc5400af3f2"
+        "name": "The-Library-Of-Arts-1.1.0-wear.apk",
+        "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.1.0/The-Library-Of-Arts-1.1.0-wear.apk",
+        "size": 8963551,
+        "sha256": "81c1824ce63e11f14d0d0932ffec8c63485838da3b23f192bcae07652b6f0cb6"
       }
     ]
   },
   "releases": [
+    {
+      "version": "1.1.0",
+      "code": 11,
+      "tag": "v1.1.0",
+      "date": "2026-11-26",
+      "name": "The Great Library of Arts 1.1.0",
+      "notes": "Reels rebuilt to Instagram's layout: full-bleed plates, right action rail, creator and caption, spinning record, double-tap heart and tap-to-pause. Every reel is scored with public-domain early music from Wikimedia Commons, Openverse and the Internet Archive, with licence and source credits. In-app APK downloads no longer 404.",
+      "assets": [
+        {
+          "name": "The-Library-Of-Arts-1.1.0-universal.apk",
+          "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.1.0/The-Library-Of-Arts-1.1.0-universal.apk",
+          "size": 22951339,
+          "sha256": "53b1440b97f95b1c90493c57afbc84c4db4c4956becb71027599727a68f6cf14"
+        },
+        {
+          "name": "The-Library-Of-Arts-1.1.0-arm64-v8a.apk",
+          "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.1.0/The-Library-Of-Arts-1.1.0-arm64-v8a.apk",
+          "size": 16543476,
+          "sha256": "0825fee19187cd0766185cf677bced3522ef2b9db445d4fa9adcda54c308a6ad"
+        },
+        {
+          "name": "The-Library-Of-Arts-1.1.0-armeabi-v7a.apk",
+          "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.1.0/The-Library-Of-Arts-1.1.0-armeabi-v7a.apk",
+          "size": 15427942,
+          "sha256": "5659c59da82d1f42a72e5f4662907d89f3ca82717d3cd7552f53b53647e846aa"
+        },
+        {
+          "name": "The-Library-Of-Arts-1.1.0-wear.apk",
+          "url": "https://github.com/fleurdeur/The-Library-Of-Arts/releases/download/v1.1.0/The-Library-Of-Arts-1.1.0-wear.apk",
+          "size": 8963551,
+          "sha256": "81c1824ce63e11f14d0d0932ffec8c63485838da3b23f192bcae07652b6f0cb6"
+        }
+      ]
+    },
     {
       "version": "1.0.9",
       "code": 10,

@@ -19,10 +19,12 @@ import coil3.request.ImageRequest
 import coil3.request.allowHardware
 import dagger.Lazy
 import org.libraryofarts.core.common.AppDispatchers
+import org.libraryofarts.core.data.music.MusicRepository
 import org.libraryofarts.core.data.repository.ArtworkRepository
 import org.libraryofarts.core.data.social.ReelComment
 import org.libraryofarts.core.data.social.SocialRepository
 import org.libraryofarts.core.model.Artwork
+import org.libraryofarts.core.model.ReelTrack
 
 data class ReelsUiState(
     val pool: List<Artwork> = emptyList(),
@@ -33,15 +35,24 @@ data class ReelsUiState(
     val cooldownLeft: Long = 0L,
     val saving: Set<String> = emptySet(),
     val message: String? = null,
+    val music: Map<String, ReelMusicState> = emptyMap(),
+)
+
+data class ReelMusicState(
+    val track: ReelTrack? = null,
+    val loading: Boolean = false,
+    val unavailable: Boolean = false,
 )
 
 @HiltViewModel
 class ReelsViewModel @Inject constructor(
     private val artworks: Lazy<ArtworkRepository>,
     private val social: SocialRepository,
+    private val musicRepository: MusicRepository,
 ) : ViewModel() {
     private val _state = MutableStateFlow(ReelsUiState())
     val state: StateFlow<ReelsUiState> = _state.asStateFlow()
+    val muted: StateFlow<Boolean> = musicRepository.muted
 
     init {
         refresh()
@@ -67,6 +78,31 @@ class ReelsViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    fun toggleMuted() {
+        musicRepository.setMuted(!musicRepository.muted.value)
+    }
+
+    fun ensureMusic(artwork: Artwork) {
+        if (_state.value.music.containsKey(artwork.id)) return
+        _state.update { it.copy(music = it.music + (artwork.id to ReelMusicState(loading = true))) }
+        viewModelScope.launch(AppDispatchers.io) {
+            val track = runCatching { musicRepository.trackFor(artwork) }.getOrNull()
+            _state.update {
+                it.copy(
+                    music = it.music + (artwork.id to ReelMusicState(
+                        track = track,
+                        unavailable = track == null,
+                    )),
+                )
+            }
+        }
+    }
+
+    fun retryMusic(artwork: Artwork) {
+        _state.update { it.copy(music = it.music - artwork.id) }
+        ensureMusic(artwork)
     }
 
     fun commentsFor(artworkId: String): List<ReelComment> = social.comments(artworkId)
