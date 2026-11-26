@@ -174,7 +174,7 @@ class UpdateRepository @Inject constructor(
                     UpdateArchitecture.ARM64 -> "arm64-v8a"
                     UpdateArchitecture.ARMV7 -> "armeabi-v7a"
                 }
-                val name = "TheGreatLibraryOfArts-$version-$suffix.apk"
+                val name = "The-Library-Of-Arts-$version-$suffix.apk"
                 UpdateAsset(
                     architecture = architecture,
                     name = name,

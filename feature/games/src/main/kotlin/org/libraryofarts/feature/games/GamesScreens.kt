@@ -34,6 +34,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Compare
 import androidx.compose.material.icons.filled.Extension
@@ -73,6 +74,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.libraryofarts.core.designsystem.component.ArtButton
 import org.libraryofarts.core.designsystem.component.EmptyState
 import org.libraryofarts.core.designsystem.component.GlassCard
+import org.libraryofarts.core.designsystem.component.LibraryIconButton
 import org.libraryofarts.core.designsystem.component.LibraryPill
 import org.libraryofarts.core.designsystem.component.SectionHeader
 import org.libraryofarts.core.designsystem.component.SoftBackdrop
@@ -123,6 +125,14 @@ fun GamesRoute(
                     BackButton(onBack)
                     Spacer(Modifier.width(10.dp))
                     Text("Play & notice", style = MaterialTheme.typography.titleLarge)
+                    Spacer(Modifier.weight(1f))
+                    val refreshing by games.refreshingPool.collectAsStateWithLifecycle()
+                    LibraryIconButton(
+                        icon = Icons.Default.Refresh,
+                        description = if (refreshing) "Refreshing the plate pool" else "Refresh the plate pool",
+                        selected = refreshing,
+                        onClick = { games.refreshPool() },
+                    )
                 }
             }
             item("intro") {
@@ -448,7 +458,8 @@ private fun QuestionPlate(artwork: Artwork, question: QuizQuestion) {
 @Composable
 fun MoodRoute(onBack: () -> Unit, onOpenArtwork: (String) -> Unit, games: GamesViewModel = hiltViewModel()) {
     var mood by remember { mutableStateOf("Calm") }
-    val works = remember(mood) { games.mood(mood) }
+    val pool by games.pool.collectAsStateWithLifecycle()
+    val works = remember(mood, pool) { games.mood(mood, pool) }
     SoftBackdrop {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -483,7 +494,7 @@ fun MoodRoute(onBack: () -> Unit, onOpenArtwork: (String) -> Unit, games: GamesV
             if (works.isEmpty()) {
                 item("empty") {
                     Text(
-                        "No works tagged for this mood yet. Try another, or install a themed pack.",
+                        "No works tagged for this mood yet. Try another, or refresh the plate pool for more works.",
                         modifier = Modifier.padding(20.dp),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -503,9 +514,14 @@ fun MoodRoute(onBack: () -> Unit, onOpenArtwork: (String) -> Unit, games: GamesV
 
 @Composable
 fun CompareRoute(onBack: () -> Unit, onOpenArtwork: (String) -> Unit, games: GamesViewModel = hiltViewModel()) {
-    val options = remember { games.artworksForCompare() }
+    val pool by games.pool.collectAsStateWithLifecycle()
+    val options = remember(pool) { games.artworksForCompare(pool) }
     var firstIndex by remember { mutableStateOf(0) }
     var secondIndex by remember { mutableStateOf(if (options.size > 1) 1 else 0) }
+    LaunchedEffect(options.size) {
+        if (firstIndex > options.lastIndex) firstIndex = 0
+        if (secondIndex > options.lastIndex) secondIndex = 0
+    }
     var split by remember { mutableFloatStateOf(0.5f) }
     val first = options.getOrNull(firstIndex)
     val second = options.getOrNull(secondIndex)
@@ -528,7 +544,7 @@ fun CompareRoute(onBack: () -> Unit, onOpenArtwork: (String) -> Unit, games: Gam
                 ScreenTitle("Two works, one eye", "Drag the divider. What changes when you look from one to the other?")
             }
             if (first == null || second == null) {
-                item("empty") { EmptyState("Not enough works", "Install a pack to compare more of the collection.") }
+                item("empty") { EmptyState("Not enough works", "Refresh the plate pool, or install a pack, to compare more of the collection.") }
             } else {
                 item("compare") {
                     Box(
@@ -619,8 +635,10 @@ fun CompareRoute(onBack: () -> Unit, onOpenArtwork: (String) -> Unit, games: Gam
 
 @Composable
 fun KidsRoute(onBack: () -> Unit, onOpenArtwork: (String) -> Unit, games: GamesViewModel = hiltViewModel()) {
-    val works = remember { games.kidsArtworks() }
+    val pool by games.pool.collectAsStateWithLifecycle()
+    val works = remember(pool) { games.kidsArtworks(pool) }
     var index by remember { mutableStateOf(0) }
+    LaunchedEffect(works.size) { if (index > works.lastIndex) index = 0 }
     val artwork = works.getOrNull(index)
     SoftBackdrop {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -633,7 +651,7 @@ fun KidsRoute(onBack: () -> Unit, onOpenArtwork: (String) -> Unit, games: GamesV
                 Text("Kids Mode", style = MaterialTheme.typography.titleLarge)
             }
             if (artwork == null) {
-                EmptyState("No pictures yet", "Install a pack to add artwork for Kids Mode.")
+                EmptyState("No pictures yet", "Refresh the plate pool, or install a pack, for more pictures.")
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),

@@ -38,6 +38,9 @@ class GamesViewModel @Inject constructor(
     private val _pool = MutableStateFlow<List<Artwork>>(SeedArtworks.all)
     val pool: StateFlow<List<Artwork>> = _pool
 
+    private val _refreshingPool = MutableStateFlow(false)
+    val refreshingPool: StateFlow<Boolean> = _refreshingPool
+
     init {
         viewModelScope.launch {
             _hasScanIndex.value = runCatching { scans.hasIndex() }.getOrDefault(false)
@@ -46,6 +49,27 @@ class GamesViewModel @Inject constructor(
                 .getOrNull()
                 ?.takeIf { it.isNotEmpty() }
                 ?.let { _pool.value = it }
+            // The games play the whole library: whatever is installed, plus a
+            // daily catch-up of museum highlights so network works join in.
+            runCatching { artworks.refreshHighlights(force = false) }
+            runCatching { artworks.allCandidates(400) }
+                .getOrNull()
+                ?.takeIf { it.size > _pool.value.size }
+                ?.let { _pool.value = it }
+        }
+    }
+
+    /** Deliberate refresh: pulls the museum highlights again right now. */
+    fun refreshPool() {
+        if (_refreshingPool.value) return
+        viewModelScope.launch {
+            _refreshingPool.value = true
+            runCatching { artworks.refreshHighlights(force = true) }
+            runCatching { artworks.allCandidates(400) }
+                .getOrNull()
+                ?.takeIf { it.isNotEmpty() }
+                ?.let { _pool.value = it }
+            _refreshingPool.value = false
         }
     }
 
@@ -71,9 +95,27 @@ class GamesViewModel @Inject constructor(
         _scan.value = ScanState.Idle
     }
 
-    fun mood(mood: String) = _pool.value.filter { artwork -> artwork.moods.any { it.equals(mood, true) } }
-    fun artworksForCompare(): List<Artwork> = _pool.value.filter { it.genre == "Painting" }.take(8)
-    fun kidsArtworks() = _pool.value.filter { it.isHighlight }.take(8)
+    fun mood(mood: String, pool: List<Artwork> = _pool.value): List<Artwork> =
+        pool.filter { artwork ->
+            artwork.moods.any { it.equals(mood, true) } ||
+                artwork.tags.any { it.equals(mood, true) } ||
+                artwork.subjects.any { it.equals(mood, true) }
+        }
+
+    fun artworksForCompare(pool: List<Artwork> = _pool.value): List<Artwork> {
+        val paintings = pool.filter { it.genre == "Painting" }
+        val chosen = (paintings + pool).distinctBy { it.id }.take(8)
+        return chosen
+    }
+
+    fun kidsArtworks(pool: List<Artwork> = _pool.value): List<Artwork> {
+        val highlights = pool.filter { it.isHighlight }
+        val chosen = if (highlights.size >= 4) highlights else pool
+        return chosen
+            .filter { it.image.thumbnailUrl.isNotBlank() || it.image.fullUrl.isNotBlank() }
+            .ifEmpty { pool }
+            .take(12)
+    }
 }
 
 /**
